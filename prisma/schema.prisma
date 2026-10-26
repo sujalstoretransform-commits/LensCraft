@@ -1,34 +1,184 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
-// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
-// enough when changing adapters.
-// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
 datasource db {
-  provider = "sqlite"
-  url      = "file:dev.sqlite"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Session {
-  id            String    @id
-  shop          String
-  state         String
-  isOnline      Boolean   @default(false)
-  scope         String?
-  expires       DateTime?
-  accessToken   String
-  userId        BigInt?
-  firstName     String?
-  lastName      String?
-  email         String?
-  accountOwner  Boolean   @default(false)
-  locale        String?
-  collaborator  Boolean?  @default(false)
-  emailVerified Boolean?  @default(false)
+  id                  String    @id
+  shop                String
+  state               String
+  isOnline            Boolean   @default(false)
+  scope               String?
+  expires             DateTime?
+  accessToken         String
+  userId              BigInt?
+  firstName           String?
+  lastName            String?
+  email               String?
+  accountOwner        Boolean   @default(false)
+  locale              String?
+  collaborator        Boolean?  @default(false)
+  emailVerified       Boolean?  @default(false)
   refreshToken        String?
   refreshTokenExpires DateTime?
+}
+
+enum LensFamily {
+  clear
+  blue_light
+  light_adaptive
+  tinted
+  polarized
+  readers
+  non_prescription
+}
+
+enum LensPriceKind {
+  base
+  upgrade
+  add_on
+}
+
+enum LensRuleKind {
+  requires_option
+  incompatible_option
+  minimum_frame_height
+  minimum_sph
+  maximum_sph
+  minimum_cyl
+  maximum_cyl
+  minimum_add
+  maximum_add
+}
+
+enum LensOptionCategory {
+  progressive_design
+  bifocal_design
+  coating
+  add_on
+}
+
+model LensOption {
+  id          String                  @id @default(cuid())
+  code        String                  @unique
+  name        String
+  category    LensOptionCategory
+  description String?
+  active      Boolean                 @default(true)
+  prices      LensPrice[]
+  rules       LensCompatibilityRule[]
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+
+  @@index([category, active])
+}
+
+model LensConfiguration {
+  id                 String   @id @default(cuid())
+  shop               String
+  productId          String
+  variantId          String
+  currencyCode       String
+  lensType           String
+  lensIndex          String
+  prescriptionMethod String
+  prescription       Json?
+  createdAt          DateTime @default(now())
+
+  @@index([shop, createdAt])
+}
+
+model LensType {
+  id               String                  @id @default(cuid())
+  code             String                  @unique
+  name             String
+  family           LensFamily
+  description      String?
+  active           Boolean                 @default(true)
+  prices           LensPrice[]
+  rules            LensCompatibilityRule[]
+  supplierMappings SupplierLensMapping[]
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+
+  @@index([family, active])
+}
+
+model LensIndex {
+  id               String                  @id @default(cuid())
+  code             String                  @unique
+  displayName      String
+  refractiveIndex  Decimal                 @db.Decimal(3, 2)
+  active           Boolean                 @default(true)
+  prices           LensPrice[]
+  rules            LensCompatibilityRule[]
+  supplierMappings SupplierLensMapping[]
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+
+  @@index([active])
+}
+
+model LensPrice {
+  id           String        @id @default(cuid())
+  code         String        @unique
+  kind         LensPriceKind
+  amountMinor  Int
+  currencyCode String        @db.VarChar(3)
+  lensTypeId   String?
+  lensType     LensType?     @relation(fields: [lensTypeId], references: [id], onDelete: Cascade)
+  lensIndexId  String?
+  lensIndex    LensIndex?    @relation(fields: [lensIndexId], references: [id], onDelete: Cascade)
+  lensOptionId String?
+  lensOption   LensOption?   @relation(fields: [lensOptionId], references: [id], onDelete: Cascade)
+  active       Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([active, kind])
+  @@index([lensTypeId, lensIndexId, currencyCode, active])
+  @@index([lensOptionId, currencyCode, active])
+}
+
+model LensCompatibilityRule {
+  id                   String       @id @default(cuid())
+  code                 String       @unique
+  kind                 LensRuleKind
+  lensTypeId           String?
+  lensType             LensType?    @relation(fields: [lensTypeId], references: [id], onDelete: Cascade)
+  lensIndexId          String?
+  lensIndex            LensIndex?   @relation(fields: [lensIndexId], references: [id], onDelete: Cascade)
+  lensOptionId         String?
+  lensOption           LensOption?  @relation(fields: [lensOptionId], references: [id], onDelete: Cascade)
+  relatedOptionCode    String?
+  limitValue           Decimal?     @db.Decimal(6, 2)
+  minimumFrameHeightMm Int?
+  message              String
+  active               Boolean      @default(true)
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  @@index([active, kind])
+  @@index([lensTypeId, lensIndexId, lensOptionId, active])
+}
+
+model SupplierLensMapping {
+  id                    String     @id @default(cuid())
+  supplier              String
+  supplierSku           String
+  supplierSpecification String?
+  lensTypeId            String
+  lensType              LensType   @relation(fields: [lensTypeId], references: [id], onDelete: Cascade)
+  lensIndexId           String?
+  lensIndex             LensIndex? @relation(fields: [lensIndexId], references: [id], onDelete: Cascade)
+  active                Boolean    @default(true)
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+
+  @@unique([supplier, supplierSku])
+  @@index([lensTypeId, lensIndexId, active])
 }

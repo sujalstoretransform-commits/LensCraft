@@ -1,0 +1,176 @@
+import { useState } from 'react'
+
+type SingleVisionConfiguratorProps = {
+    currencyCode: string;
+    lensIndices: {
+        code: string;
+        displayName: string;
+        refractiveIndex: number | string;
+        supplierMappings: {
+            lensType: {
+                code: string;
+            };
+        }[];
+        prices: {
+            code: string;
+            kind: string;
+            amountMinor: number;
+            lensType?: {
+                code: string;
+            } | null;
+        }[];
+    }[];
+    onBack?: () => void;
+    onContinue?: (selectedIndex: {
+        code: string;
+        displayName: string;
+        refractiveIndex: number;
+    }) => void;
+}
+
+export default function SingleVisionConfigurator({
+    currencyCode,
+    lensIndices,
+    onBack,
+    onContinue,
+}: SingleVisionConfiguratorProps
+) {
+    const [selectedIndexCode, setSelectedIndexCode] = useState("");
+
+    const availableIndices = lensIndices.filter((index) =>
+        index.supplierMappings.some((mapping) => mapping.lensType.code === 'single_vision')
+    )
+
+    const selectedIndex = availableIndices.find((index) => index.code === selectedIndexCode)
+
+    const formatPrice = (amountMinor: number) =>
+        new Intl.NumberFormat(undefined, {
+            style: "currency",
+            currency: currencyCode,
+        }).format(amountMinor / 100);
+
+    return (
+        <section className="w-full bg-white px-5 py-8 md:px-12">
+            <div className="w-full">
+                <button
+                    type="button"
+                    onClick={onBack}
+                    className="mb-6 text-sm font-medium text-slate-600 hover:text-slate-900"
+                >
+                    ← Back to lens types
+                </button>
+
+                <div className="mb-8">
+                    <p className="text-sm font-semibold text-blue-600">
+                        LENS CONFIGURATION
+                    </p>
+
+                    <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+                        Single Vision Lenses
+                    </h1>
+
+                    <p className="mt-3 text-slate-600">
+                        Choose your lens index to get started.
+                    </p>
+                </div>
+
+                {availableIndices.length === 0 ? (
+                    <div className="rounded-xl border border-slate-200 bg-white p-6">
+                        <h2 className="font-semibold text-slate-900">
+                            No lens indices available
+                        </h2>
+                        <p className="mt-2 text-sm text-slate-600">
+                            Check that your active lens indices have supplier mappings for
+                            the Single Vision lens type.
+                        </p>
+                    </div>
+                ) : (
+                    <>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            {availableIndices.map((index) => {
+                                const isSelected = selectedIndexCode === index.code;
+
+                                const prices = index.prices.filter(
+                                    (price) =>
+                                        !price.lensType ||
+                                        price.lensType.code === "single_vision",
+                                );
+
+                                return (
+                                    <button
+                                        key={index.code}
+                                        type="button"
+                                        aria-pressed={isSelected}
+                                        onClick={() => setSelectedIndexCode(index.code)}
+                                        className={`relative rounded-xl border bg-white p-5 text-left transition ${isSelected
+                                            ? "border-blue-600 ring-2 ring-blue-100"
+                                            : "border-slate-200 hover:border-slate-400"
+                                            }`}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-2xl font-bold text-slate-900">
+                                                {Number(index.refractiveIndex).toFixed(2)}
+                                            </span>
+                                            {isSelected && (
+                                                <span className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full bg-blue-500 text-xs text-white">
+                                                    ✓
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <h2 className="mt-2 font-semibold text-slate-900">
+                                            {index.displayName}
+                                        </h2>
+
+                                        <p className="mt-2 text-sm text-slate-600">
+                                            {Number(index.refractiveIndex) <= 1.5
+                                                ? "Standard lens index."
+                                                : Number(index.refractiveIndex) < 1.67
+                                                    ? "Thinner lens option."
+                                                    : "Higher-index option for thinner lenses."}
+                                        </p>
+
+                                        {prices.map((price) => (
+                                            <p
+                                                key={price.code}
+                                                className="mt-3 text-sm font-medium text-slate-700"
+                                            >
+                                                {price.kind === "upgrade" ? "Upgrade" : "Price"}:{" "}
+                                                {formatPrice(price.amountMinor)}
+                                            </p>
+                                        ))}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <div className="mt-8 flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                            <p className="text-sm text-slate-600">
+                                {selectedIndex
+                                    ? `${selectedIndex.displayName} selected`
+                                    : "Choose a lens index to continue."}
+                            </p>
+
+                            <button
+                                type="button"
+                                disabled={!selectedIndex}
+                                onClick={() => {
+                                    if (!selectedIndex) return;
+
+                                    onContinue?.({
+                                        code: selectedIndex.code,
+                                        displayName: selectedIndex.displayName,
+                                        refractiveIndex: Number(selectedIndex.refractiveIndex)
+                                    })
+                                }}
+                                className="rounded-lg bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                            >
+                                Continue
+                            </button>
+                        </div>
+                    </>
+                )}
+            </div>
+        </section>
+    )
+}
