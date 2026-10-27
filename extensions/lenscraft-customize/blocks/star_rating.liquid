@@ -41,36 +41,73 @@
     }
   </style>
 
-  <script>
-    
-(() => {
-  const block = document.currentScript?.closest(".shopify-section")
-    ?.querySelector(".lenscraft-customize");
+<script>
+  (() => {
+    const block = document.currentScript
+      ?.closest(".shopify-section")
+      ?.querySelector(".lenscraft-customize");
 
-  if (!block) return;
+    if (!block) return;
 
-  const button = block.querySelector("[data-lenscraft-customize]");
+    const button = block.querySelector("[data-lenscraft-customize]");
 
-  button?.addEventListener("click", () => {
-    const productForm = document.querySelector('form[action*="/cart/add"]');
-    const variantInput = productForm?.querySelector('[name="id"]');
+    button?.addEventListener("click", async () => {
+      const productForm = document.querySelector(
+        'form[action*="/cart/add"]'
+      );
 
-    const variantId = variantInput?.value || block.dataset.variantId;
+      const variantInput = productForm?.querySelector('[name="id"]');
+      const variantId = variantInput?.value || block.dataset.variantId;
 
-    const params = new URLSearchParams({
-      productId: block.dataset.productId || "",
-      variantId,
-      variantTitle: block.dataset.variantTitle || "",
-      image: block.dataset.variantImage || "",
-      currency: block.dataset.currency || "USD",
-      framePrice: block.dataset.variantPrice || "0",
+      if (!variantId) {
+        alert("Please select a frame colour first.");
+        return;
+      }
+
+      try {
+        const handle = window.location.pathname
+          .split("/products/")[1]
+          ?.split("/")[0];
+
+        if (!handle) throw new Error("Product handle not found.");
+
+        const response = await fetch(
+          `/products/${handle}.js`
+        );
+
+        if (!response.ok) throw new Error("Could not load product variants.");
+
+        const product = await response.json();
+
+        const variant = product.variants.find(
+          (item) => String(item.id) === String(variantId)
+        );
+
+        if (!variant) throw new Error("Selected variant not found.");
+
+        const image =
+          variant.featured_image?.src ||
+          product.featured_image ||
+          block.dataset.variantImage ||
+          "";
+
+        const params = new URLSearchParams({
+          productId: String(product.id),
+          variantId: String(variant.id),
+          variantTitle: variant.public_title || variant.title,
+          image,
+          currency: "{{ cart.currency.iso_code }}",
+          framePrice: String(variant.price),
+        });
+
+        window.location.href = `/apps/lenscraft?${params.toString()}`;
+      } catch (error) {
+        console.error("LensCraft variant lookup failed:", error);
+        alert("Unable to load the selected frame. Please try again.");
+      }
     });
-
-    window.location.href = `/apps/lenscraft?${params.toString()}`;
-  });
-})();
-
-  </script>
+  })();
+</script>
 {% endif %}
 
 {% schema %}
