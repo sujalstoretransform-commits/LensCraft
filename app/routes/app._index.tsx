@@ -3,10 +3,9 @@ import type { LoaderFunctionArgs } from "react-router";
 import { useLoaderData } from "react-router";
 import LensTypeSelector from "app/components/LensTypeSelector";
 import TrustBenefits from "app/components/TrustBenefits";
-import SingleVisionConfigurator from "app/components/SingleVisionConfigurator";
 import PrescriptionForm, { type PrescriptionData } from "app/components/PrescriptionForm";
 import SelectedFrame from "app/components/SelectedFrame";
-import ConfigurationReview from "app/components/ConfigurationReview";
+
 import { validatePrescription, type Prescription } from "app/services/prescription"
 import { getFramePriceMinor } from "app/services/frame-pricing.server";
 import { authenticate } from "../shopify.server";
@@ -14,6 +13,7 @@ import { loadLensCatalog } from "../services/lens-catalog.server";
 
 const safeImageUrl = (raw: string | null): string | null => {
   if (!raw) return null;
+
   try {
     const u = new URL(raw.startsWith("//") ? `https:${raw}` : raw)
     const isShopifyImage =
@@ -64,10 +64,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     currencyCode,
     framePriceMinor,
     product,
-    lensIndices: catalog.lensIndices.map((index) => ({
-      ...index,
-      refractiveIndex: Number(index.refractiveIndex),
-    })),
     catalog: {
       lensTypes: catalog.lensTypes,
       lensOptions: catalog.lensOptions
@@ -76,112 +72,98 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function HomePage() {
-  const { currencyCode, framePriceMinor, lensIndices, product } = useLoaderData<typeof loader>();
+  const { product } = useLoaderData<typeof loader>();
 
-  const [selectedLensType, setSelectedLensType] = useState<string | null>(
-    null,
+  const [step, setStep] = useState<1 | 2>(1);
+  const [prescriptionValues, setPrescriptionValues] =
+    useState<PrescriptionData | undefined>();
+  const [prescriptionErrors, setPrescriptionErrors] = useState<string[]>(
+    [],
   );
-
-  const [selectedIndex, setSelectedIndex] = useState<{
-    code: string;
-    displayName: string;
-    refractiveIndex: number;
-  } | null>(null);
-
-  const [showPrescriptionForm, setShowPrescriptionForm] = useState(false);
-
-  const [prescriptionValues, setPrescriptionValues] = useState<PrescriptionData | undefined>(undefined)
-
-  const [prescriptionErrors, setPrescriptionErrors] = useState<string[]>([])
-
-  const [showReview, setShowReview] = useState(false);
 
   const handlePrescriptionContinue = (values: PrescriptionData) => {
     const toNumber = (value: string) =>
       value.trim() === "" ? undefined : Number(value);
 
-    const rx: Prescription = {
+    const prescription: Prescription = {
       right: {
         sph: toNumber(values.rightSph),
         cyl: toNumber(values.rightCyl),
-        axis: toNumber(values.rightAxis)
+        axis: toNumber(values.rightAxis),
       },
       left: {
         sph: toNumber(values.leftSph),
         cyl: toNumber(values.leftCyl),
-        axis: toNumber(values.leftAxis)
+        axis: toNumber(values.leftAxis),
       },
       pd: {
-        single: toNumber(values.pd)
-      }
-    }
+        single: toNumber(values.pd),
+      },
+    };
 
-    const result = validatePrescription(rx)
+    const result = validatePrescription(prescription);
 
     if (!result.valid) {
-      setPrescriptionErrors(result.errors)
-      return
+      setPrescriptionErrors(result.errors);
+      return;
     }
 
     setPrescriptionValues(values);
     setPrescriptionErrors([]);
-    setShowPrescriptionForm(false)
-    setShowReview(true);
-  }
-
+  };
 
   return (
     <main className="w-full bg-white font-sans">
-
       <SelectedFrame
         variantTitle={product.variantTitle}
         image={product.image}
       />
 
+      <section className="border-b border-slate-200 px-5 py-5 md:px-12">
+        <div className="w-full">
+          <p className="text-sm font-semibold text-slate-500">
+            STEP {step} OF 2
+          </p>
+
+          <div className="mt-3 flex gap-2">
+            <div
+              className={`h-1.5 flex-1 rounded-full ${step >= 1 ? "bg-slate-900" : "bg-slate-200"
+                }`}
+            />
+            <div
+              className={`h-1.5 flex-1 rounded-full ${step >= 2 ? "bg-slate-900" : "bg-slate-200"
+                }`}
+            />
+          </div>
+        </div>
+      </section>
+
       <div className="w-full">
-        {showReview && selectedIndex && prescriptionValues ? (
-          <ConfigurationReview
-            lensTypeName="Single Vision"
-            lensIndexName={selectedIndex.displayName}
-            refractiveIndex={selectedIndex.refractiveIndex}
-            prescription={prescriptionValues}
-            currencyCode={currencyCode}
-            framePriceMinor={framePriceMinor}
-            lensPriceMinor={0}
-            totalPriceMinor={framePriceMinor}
-            onBack={() => {
-              setShowReview(false)
-              setShowPrescriptionForm(true)
+        {step === 1 && (
+          <LensTypeSelector
+            onSelectLensType={(lensType) => {
+              if (lensType !== "single_vision") {
+                return;
+              }
+
+              setPrescriptionErrors([]);
+              setStep(2);
             }}
-            onContinue={() => {
-              console.log("Configuration ready for pricing and cart");
-            }}
-            variantId={product.variantId}
           />
-        ) : showPrescriptionForm && selectedIndex ? (
+        )}
+
+        {step === 2 && (
           <PrescriptionForm
-            lensIndexName={selectedIndex.displayName}
-            refractiveIndex={selectedIndex.refractiveIndex}
+            lensIndexName="Single Vision"
+            refractiveIndex={1.5}
             initialValues={prescriptionValues}
             errors={prescriptionErrors}
-            onBack={() => setShowPrescriptionForm(false)}
+            onBack={() => {
+              setPrescriptionErrors([]);
+              setStep(1);
+            }}
             onContinue={handlePrescriptionContinue}
           />
-        ) : selectedLensType === "single_vision" ? (
-          <SingleVisionConfigurator
-            currencyCode={currencyCode}
-            lensIndices={lensIndices}
-            onBack={() => {
-              setSelectedLensType(null)
-              setSelectedIndex(null)
-            }}
-            onContinue={(index) => {
-              setSelectedIndex(index)
-              setShowPrescriptionForm(true)
-            }}
-          />
-        ) : (
-          <LensTypeSelector onSelectLensType={setSelectedLensType} />
         )}
       </div>
 
