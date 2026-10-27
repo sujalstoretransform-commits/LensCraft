@@ -1,5 +1,4 @@
 import { authenticate } from "../shopify.server";
-import { getFramePriceMinor } from "./frame-pricing.server";
 import { loadLensCatalog } from "./lens-catalog.server";
 
 const safeImageUrl = (raw: string | null): string | null => {
@@ -47,10 +46,8 @@ export async function loadLensConfiguratorPage(request: Request) {
     image: safeImageUrl(url.searchParams.get("image")),
   };
 
-  const framePriceMinor =
-    !isAppProxy && admin && product.variantId
-      ? await getFramePriceMinor(admin, product.variantId)
-      : 0;
+  const rawFramePrice = Number.parseInt(url.searchParams.get("framePrice") ?? "", 10)
+  const framePriceMinor = Number.isInteger(rawFramePrice) && rawFramePrice >= 0 ? rawFramePrice : 0
 
   const lensIndices = catalog.lensIndices.map((index) => ({
     ...index,

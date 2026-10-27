@@ -1,8 +1,10 @@
 import { useState } from "react";
-import singleVisionPhoto from '../assets/single_vision_lens.png'
+import singleVisionDistancePhoto from '../assets/single_vision_lens.png'
 import bifocalPhoto from "../assets/bifocal_lens.png"
 import progressivePhoto from '../assets/progressive_lens.png'
-import speciallityPhoto from '../assets/speciallity_lens.png'
+import singleVisionReadingPhoto from '../assets/single_vision_reading.png'
+import readingPhoto from '../assets/reading_lens.png'
+import nonPrescriptionPhoto from '../assets/non-prescription_lens.png'
 
 type LensType = {
     code: string;
@@ -16,10 +18,12 @@ type LensTypeSelectorProps = {
 }
 
 const lensImages: Record<string, string> = {
-    single_vision_distance: singleVisionPhoto,
+    single_vision_distance: singleVisionDistancePhoto,
+    single_vision_reading: singleVisionReadingPhoto,
     bifocal: bifocalPhoto,
     progressive: progressivePhoto,
-    specialty: speciallityPhoto,
+    reading_glasses: readingPhoto,
+    non_prescription: nonPrescriptionPhoto
 };
 
 export default function LensTypeSelector({

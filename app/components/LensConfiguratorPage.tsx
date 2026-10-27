@@ -101,9 +101,8 @@ export default function LensConfiguratorPage({
             {[1, 2, 3, 4, 5].map((progressStep) => (
               <div
                 key={progressStep}
-                className={`h-1.5 flex-1 rounded-full ${
-                  step >= progressStep ? "bg-slate-900" : "bg-slate-200"
-                }`}
+                className={`h-1.5 flex-1 rounded-full ${step >= progressStep ? "bg-slate-900" : "bg-slate-200"
+                  }`}
               />
             ))}
           </div>
@@ -183,8 +182,8 @@ export default function LensConfiguratorPage({
             refractiveIndex={selectedLensIndex.refractiveIndex}
             prescription={prescriptionValues}
             framePriceMinor={framePriceMinor}
-            lensPriceMinor={5}
-            totalPriceMinor={5}
+            lensPriceMinor={0}
+            totalPriceMinor={framePriceMinor}
             currencyCode={currencyCode}
             variantId={product.variantId}
             onBack={() => setStep(4)}
