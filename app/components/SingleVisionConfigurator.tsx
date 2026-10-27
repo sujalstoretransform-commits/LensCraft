@@ -20,6 +20,9 @@ type SingleVisionConfiguratorProps = {
             } | null;
         }[];
     }[];
+    compatibleIndexCodes: string[];
+    lensTypeCode: string;
+    lensOptionCode: string;
     onBack?: () => void;
     onContinue?: (selectedIndex: {
         code: string;
@@ -31,6 +34,9 @@ type SingleVisionConfiguratorProps = {
 export default function SingleVisionConfigurator({
     currencyCode,
     lensIndices,
+    compatibleIndexCodes,
+    lensTypeCode,
+    lensOptionCode,
     onBack,
     onContinue,
 }: SingleVisionConfiguratorProps
@@ -38,7 +44,7 @@ export default function SingleVisionConfigurator({
     const [selectedIndexCode, setSelectedIndexCode] = useState("");
 
     const availableIndices = lensIndices.filter((index) =>
-        index.supplierMappings.some((mapping) => mapping.lensType.code === 'single_vision')
+        compatibleIndexCodes.includes(index.code)
     )
 
     const selectedIndex = availableIndices.find((index) => index.code === selectedIndexCode)
@@ -80,8 +86,8 @@ export default function SingleVisionConfigurator({
                             No lens indices available
                         </h2>
                         <p className="mt-2 text-sm text-slate-600">
-                            Check that your active lens indices have supplier mappings for
-                            the Single Vision lens type.
+                            No active index compatibility records were found for the selected
+                            vision type ({lensTypeCode}) and lens option ({lensOptionCode}).
                         </p>
                     </div>
                 ) : (
@@ -93,7 +99,7 @@ export default function SingleVisionConfigurator({
                                 const prices = index.prices.filter(
                                     (price) =>
                                         !price.lensType ||
-                                        price.lensType.code === "single_vision",
+                                        price.lensType.code === lensTypeCode,
                                 );
 
                                 return (

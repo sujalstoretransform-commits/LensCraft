@@ -13,7 +13,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
 
   return {
-    isAppProxy: url.pathname === "/app" && url.searchParams.has("signature"),
+    isAppProxy: url.searchParams.has("signature"),
     assetOrigin: url.origin,
   };
 }

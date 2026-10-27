@@ -45,7 +45,7 @@ const getLensIndices = (currencyCode: string) => {
             prices: {
                 where: {
                     active: true,
-                    currencyCode,
+                    currencyCode: currencyCode,
                 },
                 select: {
                     code: true,
@@ -65,18 +65,38 @@ const getLensIndices = (currencyCode: string) => {
 
 const getLensOptions = (currencyCode: string) => {
     return prisma.lensOption.findMany({
-        where: { active: true },
+        where: {
+            active: true,
+            category: "lens_type",
+        },
         select: {
             code: true,
             name: true,
             category: true,
+            description: true,
             prices: {
-                where: { active: true, currencyCode },
+                where: {
+                    active: true,
+                    currencyCode,
+                },
                 select: priceFields,
             },
+            rules: {
+                where: {
+                    active: true,
+                },
+                select: {
+                    code: true,
+                    kind: true,
+                    message: true,
+                },
+            },
+        },
+        orderBy: {
+            name: "asc",
         },
     });
-}
+};
 
 const getRules = () => {
     return prisma.lensCompatibilityRule.findMany({
@@ -95,13 +115,30 @@ const getRules = () => {
     });
 }
 
+const getLensIndexCompatibilities = () => {
+    return prisma.lensIndexCompatibility.findMany({
+        where: {
+            active: true,
+            lensType: { active: true },
+            lensOption: { active: true },
+            lensIndex: { active: true },
+        },
+        select: {
+            lensType: { select: { code: true } },
+            lensOption: { select: { code: true } },
+            lensIndex: { select: { code: true } },
+        },
+    });
+}
+
 export const loadLensCatalog = async (currencyCode: string) => {
-    const [lensTypes, lensIndices, lensOptions, rules] = await Promise.all([
+    const [lensTypes, lensIndices, lensOptions, rules, lensIndexCompatibilities] = await Promise.all([
         getLensTypes(currencyCode),
         getLensIndices(currencyCode),
         getLensOptions(currencyCode),
         getRules(),
+        getLensIndexCompatibilities(),
     ]);
 
-    return { lensTypes, lensIndices, lensOptions, rules };
+    return { lensTypes, lensIndices, lensOptions, rules, lensIndexCompatibilities };
 }

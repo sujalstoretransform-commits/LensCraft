@@ -2,7 +2,7 @@ import { useState } from "react";
 
 type PrescriptionFormProps = {
     lensIndexName: string;
-    refractiveIndex: number;
+    refractiveIndex: number | null;
     onBack: () => void;
     onContinue: (prescription: PrescriptionData) => void;
     initialValues?: PrescriptionData;
@@ -79,7 +79,7 @@ export default function PrescriptionForm(
 
                 <div className="mb-6 rounded-lg bg-slate-50 p-4 text-sm text-slate-700">
                     Selected lens: <strong>{lensIndexName}</strong> (
-                    {refractiveIndex.toFixed(2)})
+                    {refractiveIndex?.toFixed(2)})
                 </div>
 
                 <div className="overflow-x-auto rounded-xl border border-slate-200">

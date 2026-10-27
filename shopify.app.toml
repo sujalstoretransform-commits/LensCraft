@@ -51,6 +51,6 @@ redirect_urls = [ "https://example.com/api/auth" ]
 automatically_update_urls_on_dev = true
 
 [app_proxy]
-url = "/app"
+url = "/apps/lenscraft"
 prefix = "apps"
 subpath = "lenscraft"

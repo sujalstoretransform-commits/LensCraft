@@ -1,12 +1,23 @@
+import { useState } from "react";
 import type { PrescriptionData } from "./PrescriptionForm";
+
+declare global {
+    interface Window {
+        Shopify?: {
+            routes?: {
+                root?: string;
+            };
+        };
+    }
+}
 
 type ConfigurationReviewProps = {
     lensTypeName: string;
+    lensOptionName: string;
     lensIndexName: string;
     refractiveIndex: number;
     prescription: PrescriptionData;
     onBack?: () => void;
-    onContinue?: () => void;
     framePriceMinor: number;
     lensPriceMinor: number;
     totalPriceMinor: number;
@@ -16,18 +27,21 @@ type ConfigurationReviewProps = {
 
 export default function ConfigurationReview({
     lensTypeName,
+    lensOptionName,
     lensIndexName,
     refractiveIndex,
     prescription,
     onBack,
-    onContinue,
     framePriceMinor,
     lensPriceMinor,
     totalPriceMinor,
     currencyCode,
-    variantId
+    variantId,
 }: ConfigurationReviewProps
 ) {
+    const [isAddingToCart, setIsAddingToCart] = useState(false);
+    const [cartError, setCartError] = useState<string | null>(null);
+
     const formatPrice = (amountMinor: number) =>
         new Intl.NumberFormat("en-US", {
             style: "currency",
@@ -37,34 +51,54 @@ export default function ConfigurationReview({
 
     const handleContinueToCart = () => {
         if (!variantId) {
-            alert("Frame variant is missing. Please go back and select your frame.");
+            setCartError("Frame variant is missing. Please go back and select your frame.");
             return;
         }
 
-        const params = new URLSearchParams({
+        setIsAddingToCart(true);
+        setCartError(null);
+
+        const storefrontOrigin = window.location.origin;
+
+        const fields: Record<string, string> = {
             id: variantId,
             quantity: "1",
+            return_to: "/cart",
             "properties[Lens Type]": lensTypeName,
+            "properties[Lens Option]": lensOptionName,
             "properties[Lens Index]": lensIndexName,
             "properties[Refractive Index]": String(refractiveIndex),
             "properties[Right SPH]": prescription.rightSph || "0",
             "properties[Right CYL]": prescription.rightCyl || "0",
-            "properties[Right Axis]": prescription.rightAxis || "—",
+            "properties[Right Axis]": prescription.rightAxis || "N/A",
             "properties[Left SPH]": prescription.leftSph || "0",
             "properties[Left CYL]": prescription.leftCyl || "0",
-            "properties[Left Axis]": prescription.leftAxis || "—",
-            "properties[PD]": prescription.pd || "—",
+            "properties[Left Axis]": prescription.leftAxis || "N/A",
+            "properties[PD]": prescription.pd || "N/A",
+        };
+
+        const form = document.createElement("form");
+        form.acceptCharset = "UTF-8";
+        form.method = "POST";
+        form.action = `${storefrontOrigin}/cart/add`;
+
+        Object.entries(fields).forEach(([name, value]) => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = name;
+            input.value = value;
+            form.appendChild(input);
         });
 
-        window.location.href = `/cart/add?${params.toString()}`;
+        document.body.appendChild(form);
+        form.submit();
     };
-
     return (
         <section className="w-full bg-white px-5 py-8 md:px-12 md:py-10">
             <div className="w-full">
                 <div className="mb-8">
                     <p className="text-sm font-medium text-blue-600">
-                        Step 4 of 4
+                        Step 5 of 5
                     </p>
 
                     <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
@@ -77,35 +111,30 @@ export default function ConfigurationReview({
                 </div>
 
                 <div className="grid w-full grid-cols-1 gap-5 md:grid-cols-2">
-                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-6">
-                        <div className="flex items-start gap-4">
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-2xl text-blue-600">
-                                ◉
-                            </div>
-
+                    <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-3">
+                        <div className="flex min-h-[120px] items-start gap-4 rounded-lg border border-slate-200 bg-slate-50 p-5">
+                            <div className="mt-1 shrink-0 text-xl text-blue-600">◉</div>
                             <div className="min-w-0">
                                 <p className="text-sm text-slate-500">Lens type</p>
-                                <h2 className="mt-1 text-xl font-semibold text-slate-900">
-                                    {lensTypeName}
-                                </h2>
-                                <p className="mt-1 text-sm text-slate-500">
-                                    Your selected lens design
-                                </p>
+                                <h2 className="mt-1 text-lg font-semibold text-slate-900">{lensTypeName}</h2>
+                                <p className="mt-1 text-sm text-slate-500">Your selected lens design</p>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-6">
-                        <div className="flex items-start gap-4">
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-2xl text-blue-600">
-                                ◎
+                        <div className="flex min-h-[120px] items-start gap-4 rounded-lg border border-slate-200 bg-slate-50 p-5">
+                            <div className="mt-1 shrink-0 text-xl text-blue-600">◎</div>
+                            <div className="min-w-0">
+                                <p className="text-sm text-slate-500">Lens option</p>
+                                <h2 className="mt-1 text-lg font-semibold text-slate-900">{lensOptionName}</h2>
+                                <p className="mt-1 text-sm text-slate-500">Your selected lens feature</p>
                             </div>
+                        </div>
 
+                        <div className="flex min-h-[120px] items-start gap-4 rounded-lg border border-slate-200 bg-slate-50 p-5">
+                            <div className="mt-1 shrink-0 text-xl text-blue-600">◎</div>
                             <div className="min-w-0">
                                 <p className="text-sm text-slate-500">Lens index</p>
-                                <h2 className="mt-1 text-xl font-semibold text-slate-900">
-                                    {lensIndexName}
-                                </h2>
+                                <h2 className="mt-1 text-lg font-semibold text-slate-900">{lensIndexName}</h2>
                                 <p className="mt-1 text-sm text-slate-500">
                                     Refractive index: {refractiveIndex.toFixed(2)}
                                 </p>
@@ -204,7 +233,7 @@ export default function ConfigurationReview({
                         </div>
                     </div>
                 </div>
-                <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <button
                         type="button"
                         onClick={onBack}
@@ -213,13 +242,21 @@ export default function ConfigurationReview({
                         Back
                     </button>
 
-                    <button
-                        type="button"
-                        onClick={handleContinueToCart}
-                        className="rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-                    >
-                        Continue to Cart
-                    </button>
+                    <div className="flex flex-col items-start gap-2 sm:items-end">
+                        {cartError && (
+                            <p role="alert" className="text-sm text-red-600">
+                                {cartError}
+                            </p>
+                        )}
+                        <button
+                            type="button"
+                            onClick={handleContinueToCart}
+                            disabled={isAddingToCart}
+                            className="rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60"
+                        >
+                            {isAddingToCart ? "Adding to cart…" : "Continue to Cart"}
+                        </button>
+                    </div>
                 </div>
             </div>
         </section>

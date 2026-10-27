@@ -4,39 +4,30 @@ import bifocalPhoto from "../assets/bifocal_lens.png"
 import progressivePhoto from '../assets/progressive_lens.png'
 import speciallityPhoto from '../assets/speciallity_lens.png'
 
+type LensType = {
+    code: string;
+    name: string;
+    description: string | null;
+};
+
 type LensTypeSelectorProps = {
-    onSelectLensType: (lensTypeCode: string) => void
+    lensTypes: LensType[];
+    onSelectLensType: (lensTypeCode: string) => void;
 }
 
-const lensTypes = [
-    {
-        id: "single_vision",
-        name: "Single Vision",
-        description: "One field of vision.\nIdeal for everyday use.",
-        icon: { src: singleVisionPhoto },
-    },
-    {
-        id: "bifocal",
-        name: "Bifocal",
-        description: "Two fields of vision.\nNear and distance.",
-        icon: { src: bifocalPhoto },
-    },
-    {
-        id: "progressive",
-        name: "Progressive",
-        description: "Multiple fields of vision.\nSmooth transition.",
-        icon: { src: progressivePhoto },
-    },
-    {
-        id: "specialty",
-        name: "Specialty Lenses",
-        description: "Blue light, photochromic,\ntinted and more.",
-        icon: { src: speciallityPhoto },
-    },
-];
+const lensImages: Record<string, string> = {
+    single_vision_distance: singleVisionPhoto,
+    bifocal: bifocalPhoto,
+    progressive: progressivePhoto,
+    specialty: speciallityPhoto,
+};
 
-export default function LensTypeSelector({ onSelectLensType }: LensTypeSelectorProps) {
-    const [selected, setSelected] = useState("single_vision");
+export default function LensTypeSelector({
+    lensTypes,
+    onSelectLensType
+}: LensTypeSelectorProps
+) {
+    const [selected, setSelected] = useState("single_vision_distance");
 
     return (
         <section className="w-full mt-9 bg-white px-6 py-6 md:px-12">
@@ -51,16 +42,17 @@ export default function LensTypeSelector({ onSelectLensType }: LensTypeSelectorP
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {lensTypes.map((lens) => {
-                    const isSelected = selected === lens.id;
+                    const isSelected = selected === lens.code;
+                    const image = lensImages[lens.code]
 
                     return (
                         <button
-                            key={lens.id}
+                            key={lens.code}
                             type="button"
                             aria-pressed={isSelected}
                             onClick={() => {
-                                setSelected(lens.id)
-                                onSelectLensType(lens.id)
+                                setSelected(lens.code)
+                                onSelectLensType(lens.code)
                             }}
                             className={`relative flex min-h-48 flex-col items-start rounded-lg border p-5 text-left transition-colors ${isSelected
                                 ? "border-blue-500 bg-blue-50/50 ring-1 ring-blue-500"
@@ -74,12 +66,17 @@ export default function LensTypeSelector({ onSelectLensType }: LensTypeSelectorP
                             )}
 
                             <span className="mb-3 flex size-14  items-center justify-center rounded-xl bg-blue-50 text-4xl font-light text-blue-300">
-                                <img
-                                    src={lens.icon.src}
-                                    alt=""
-                                    className="size-full rounded-xl object-contain"
-                                />
-
+                                {image ? (
+                                    <img
+                                        src={image}
+                                        alt=""
+                                        className="size-full rounded-xl object-contain"
+                                    />
+                                ) : (
+                                    <span className="text-xl font-semibold text-blue-400">
+                                        {lens.name.charAt(0)}
+                                    </span>
+                                )}
                             </span>
 
                             <span className="text-sm font-bold text-slate-900">
