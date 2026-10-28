@@ -80,18 +80,16 @@ export default function PrescriptionSelection({
                   type="button"
                   aria-pressed={isSelected}
                   onClick={() => setSelectedMethod(id)}
-                  className={`group flex min-h-32 items-start gap-4 rounded-xl border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
-                    isSelected
-                      ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
-                      : "border-slate-200 bg-white hover:border-blue-400 hover:bg-blue-50/40"
-                  }`}
+                  className={`group flex min-h-32 items-start gap-4 rounded-xl border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${isSelected
+                    ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
+                    : "border-slate-200 bg-white hover:border-blue-400 hover:bg-blue-50/40"
+                    }`}
                 >
                   <span
-                    className={`flex size-12 shrink-0 items-center justify-center rounded-lg transition ${
-                      isSelected
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-blue-50 text-blue-600 group-hover:bg-blue-100"
-                    }`}
+                    className={`flex size-12 shrink-0 items-center justify-center rounded-lg transition ${isSelected
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-blue-50 text-blue-600 group-hover:bg-blue-100"
+                      }`}
                   >
                     <Icon size={24} strokeWidth={1.8} />
                   </span>
@@ -104,11 +102,10 @@ export default function PrescriptionSelection({
 
                       <ArrowRight
                         size={18}
-                        className={`shrink-0 transition group-hover:translate-x-1 ${
-                          isSelected
-                            ? "text-blue-600"
-                            : "text-slate-400 group-hover:text-blue-600"
-                        }`}
+                        className={`shrink-0 transition group-hover:translate-x-1 ${isSelected
+                          ? "text-blue-600"
+                          : "text-slate-400 group-hover:text-blue-600"
+                          }`}
                       />
                     </span>
 
@@ -139,7 +136,7 @@ export default function PrescriptionSelection({
                 onContinue(selectedMethod);
               }
             }}
-            className="rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-700"
           >
             Continue
           </button>

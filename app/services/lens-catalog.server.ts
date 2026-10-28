@@ -67,7 +67,9 @@ const getLensOptions = (currencyCode: string) => {
     return prisma.lensOption.findMany({
         where: {
             active: true,
-            category: "lens_type",
+            category: {
+                in: ["add_on", "lens_type"]
+            }
         },
         select: {
             code: true,

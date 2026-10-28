@@ -31,6 +31,18 @@ const lensTypeOptions = [
         category: "lens_type" as const,
         description: "Designed to reduce glare from reflective surfaces.",
     },
+    {
+        code: "anti_fog",
+        name: "Anti-fog coating",
+        category: "add_on" as const,
+        description: "Helps prevent fogging on lenses.",
+    },
+    {
+        code: "blue_light_coating",
+        name: "Blue-light coating",
+        category: "add_on" as const,
+        description: "Optional blue-light coating for clear lenses.",
+    },
 ];
 
 for (const option of lensTypeOptions) {

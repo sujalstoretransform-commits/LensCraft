@@ -15,6 +15,7 @@ import { calculatePrice, PriceError } from "app/services/lens-pricing";
 import PrescriptionSelection, {
   PrescriptionMethod,
 } from "./PrescriptionSelection";
+import CoatingReview, { CoatingSelection } from "./CoatingReview";
 
 type PriceResult = {
   items: {
@@ -41,7 +42,7 @@ export default function LensConfiguratorPage({
     lensVariantByMinor,
   } = data;
 
-  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8>(1);
   const [prescriptionValues, setPrescriptionValues] = useState<
     PrescriptionData | undefined
   >();
@@ -59,8 +60,13 @@ export default function LensConfiguratorPage({
   const [priceResult, setPriceResult] = useState<PriceResult | null>(null);
   const [priceError, setPriceError] = useState("");
   const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
-  const [prescriptionMethod, setPrescriptionMethod] =
-    useState<PrescriptionMethod | null>(null);
+  const [prescriptionMethod, setPrescriptionMethod] = useState<PrescriptionMethod | null>(null);
+  const [coatingSelection, setCoatingSelection] = useState<CoatingSelection>({
+    antiFog: false,
+    blueLight: false,
+  });
+
+  const [selectedCoatings, setSelectedCoatings] = useState<string[]>([]);
 
   const compatibleIndexCodes = catalog.lensIndexCompatibilities
     .filter(
@@ -106,7 +112,10 @@ export default function LensConfiguratorPage({
     catalog.lensOptions.find((option) => option.code === selectedLensOptionCode)
       ?.name ?? selectedLensOptionCode;
 
-  const calculateSelectedPrice = (lensIndexCode: string) => {
+  const calculateSelectedPrice = (
+    lensIndexCode: string,
+    optionCodes: string[],
+  ) => {
     setIsCalculatingPrice(true);
     setPriceError("");
 
@@ -116,14 +125,13 @@ export default function LensConfiguratorPage({
         {
           lensTypeCode: selectedVisionTypeCode,
           lensIndexCode,
-          optionCodes: [selectedLensOptionCode],
+          optionCodes,
         },
         framePriceMinor,
       );
 
       setPriceResult(pricing);
       setPriceError("");
-      setStep(6);
     } catch (error) {
       setPriceError(
         error instanceof Error ? error.message : "Unable to calculate price.",
@@ -152,10 +160,10 @@ export default function LensConfiguratorPage({
       <section className="border-b border-slate-200 px-5 py-5 md:px-12">
         <div className="w-full">
           <p className="text-sm font-semibold text-slate-500">
-            STEP {step} OF 6
+            STEP {step} OF 8
           </p>
           <div className="mt-3 flex gap-2">
-            {[1, 2, 3, 4, 5, 6].map((progressStep) => (
+            {[1, 2, 3, 4, 5, 6, 7].map((progressStep) => (
               <div
                 key={progressStep}
                 className={`h-1.5 flex-1 rounded-full ${step >= progressStep ? "bg-slate-900" : "bg-slate-200"
@@ -171,7 +179,7 @@ export default function LensConfiguratorPage({
           <LensTypeSelector
             lensTypes={lensTypesWithPrices}
             onSelectLensType={(lensType) => {
-              if (lensType !== "single_vision_distance") return;
+              if (lensType !== "single_vision_distance" && lensType !== "single_vision_reading") return;
               setSelectedVisionTypeCode(lensType);
               setPrescriptionErrors([]);
               setStep(2);
@@ -246,12 +254,52 @@ export default function LensConfiguratorPage({
             onContinue={(index) => {
               setSelectedLensIndex(index);
               setSelectedLensIndexCode(index.code);
-              calculateSelectedPrice(index.code);
+              setStep(6)
             }}
           />
         )}
 
-        {step === 6 && selectedLensIndex && prescriptionValues && (
+        {step === 6 && selectedLensIndex && (
+          <CoatingReview
+            lensOptionCode={selectedLensOptionCode}
+            initialSelection={coatingSelection}
+            onBack={() => setStep(5)}
+            onContinue={(selection) => {
+              setCoatingSelection(selection)
+
+              const selected: string[] = [];
+
+              if (selection.antiFog) {
+                selected.push("Anti-fog")
+              }
+
+              if (selection.blueLight) {
+                selected.push("Blue-light coating")
+              }
+
+              setSelectedCoatings(selected)
+
+              const optionCodes = [selectedLensOptionCode];
+
+              if (selection.antiFog) {
+                optionCodes.push("anti_fog");
+              }
+
+              if (selection.blueLight) {
+                optionCodes.push("blue_light_coating");
+              }
+
+
+              calculateSelectedPrice(
+                selectedLensIndex.code,
+                optionCodes,
+              )
+              setStep(7)
+            }}
+          />
+        )}
+
+        {step === 7 && selectedLensIndex && prescriptionValues && (
           <ConfigurationReview
             lensTypeName={selectedLensTypeName}
             lensOptionName={selectedLensOptionName}
@@ -266,8 +314,9 @@ export default function LensConfiguratorPage({
             totalPriceMinor={priceResult?.totalMinor ?? framePriceMinor}
             currencyCode={currencyCode}
             variantId={product.variantId}
-            onBack={() => setStep(5)}
+            onBack={() => setStep(6)}
             priceItems={priceResult?.items ?? []}
+            selectedCoatings={selectedCoatings}
           />
         )}
       </div>

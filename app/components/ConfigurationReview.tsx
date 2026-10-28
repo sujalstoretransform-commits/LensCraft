@@ -19,6 +19,7 @@ type ConfigurationReviewProps = {
     label: string;
     amountMinor: number;
   }[];
+  selectedCoatings: string[];
 };
 
 export default function ConfigurationReview({
@@ -35,6 +36,7 @@ export default function ConfigurationReview({
   currencyCode,
   variantId,
   priceItems,
+  selectedCoatings,
 }: ConfigurationReviewProps) {
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [cartError, setCartError] = useState<string | null>(null);
@@ -76,6 +78,7 @@ export default function ConfigurationReview({
       "Left SPH": prescription.leftSph || "0",
       "Left CYL": prescription.leftCyl || "0",
       "Left Axis": prescription.leftAxis || "N/A",
+      "Selected Coating": selectedCoatings.length > 0 ? selectedCoatings.join(", ") : "None",
       PD: prescription.pd || "N/A",
     };
 
@@ -117,6 +120,7 @@ export default function ConfigurationReview({
     document.body.appendChild(form);
     form.submit();
   };
+  
   return (
     <section className="w-full bg-white px-5 py-8 md:px-12 md:py-10">
       <div className="w-full">
@@ -172,6 +176,26 @@ export default function ConfigurationReview({
             </div>
           </div>
         </div>
+
+        {selectedCoatings.length > 0 && (
+          <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-5">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Selected Coatings
+            </h2>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {selectedCoatings.map((coating) => (
+                <span
+                  key={coating}
+                  className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700"
+                >
+                  {coating}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
 
         <div className="mt-8 w-full overflow-hidden rounded-xl border border-slate-200">
           <div className="border-b border-slate-200 px-5 py-4 md:px-6">
@@ -266,7 +290,7 @@ export default function ConfigurationReview({
               type="button"
               onClick={handleContinueToCart}
               disabled={isAddingToCart}
-              className="rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60"
+              className="rounded-lg bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-700"
             >
               {isAddingToCart ? "Adding to cart…" : "Continue to Cart"}
             </button>
