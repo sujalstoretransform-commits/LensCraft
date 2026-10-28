@@ -46,7 +46,7 @@ export default function LensTypeConfigurator({
 
                 <div className="mb-8">
                     <p className="text-sm font-semibold text-blue-600">
-                        LENS CONFIGURATION · STEP 3
+                        LENS CONFIGURATION · STEP 4
                     </p>
 
                     <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">

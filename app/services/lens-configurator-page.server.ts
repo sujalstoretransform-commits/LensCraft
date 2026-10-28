@@ -25,18 +25,17 @@ export async function loadLensConfiguratorPage(request: Request) {
 
   let admin;
   if (isAppProxy) {
-    await authenticate.public.appProxy(request);
+    ({ admin } = await authenticate.public.appProxy(request));
   } else {
     ({ admin } = await authenticate.admin(request));
   }
 
-  const requestedCurrency = url.searchParams
-    .get("currency")
-    ?.toUpperCase();
+  const requestedCurrency = url.searchParams.get("currency")?.toUpperCase();
 
-  const currencyCode = requestedCurrency && /^[A-Z]{3}$/.test(requestedCurrency)
-    ? requestedCurrency
-    : "USD";
+  const currencyCode =
+    requestedCurrency && /^[A-Z]{3}$/.test(requestedCurrency)
+      ? requestedCurrency
+      : "USD";
 
   const catalog = await loadLensCatalog(currencyCode);
   const product = {
@@ -46,19 +45,45 @@ export async function loadLensConfiguratorPage(request: Request) {
     image: safeImageUrl(url.searchParams.get("image")),
   };
 
-  const rawFramePrice = Number.parseInt(url.searchParams.get("framePrice") ?? "", 10)
-  const framePriceMinor = Number.isInteger(rawFramePrice) && rawFramePrice >= 0 ? rawFramePrice : 0
+  const rawFramePrice = Number.parseInt(
+    url.searchParams.get("framePrice") ?? "",
+    10,
+  );
+  const framePriceMinor =
+    Number.isInteger(rawFramePrice) && rawFramePrice >= 0 ? rawFramePrice : 0;
 
   const lensIndices = catalog.lensIndices.map((index) => ({
     ...index,
     refractiveIndex: Number(index.refractiveIndex),
   }));
 
+  const lensVariantByMinor: Record<number, string> = {};
+
+  if (admin) {
+    const res = await admin.graphql(`#graphql
+      query {
+        productByHandle(handle: "lens-upgrade") {
+          variants(first: 100) {
+            nodes { id price }
+          }
+        }
+      }`);
+
+    const json = await res.json();
+
+    for (const v of json.data?.productByHandle?.variants?.nodes ?? []) {
+      lensVariantByMinor[Math.round(Number(v.price) * 100)] = v.id
+        .split("/")
+        .pop()!;
+    }
+  }
+
   return {
     currencyCode,
     framePriceMinor,
     product,
     lensIndices,
+    lensVariantByMinor,
     catalog: {
       lensTypes: catalog.lensTypes,
       lensOptions: catalog.lensOptions,
