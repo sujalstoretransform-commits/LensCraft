@@ -39,6 +39,17 @@ const compatibility = [
     ],
   },
   {
+    lensTypeCode: "single_vision_reading",
+    lensOptionCode: "blue_light",
+    lensIndexCodes: [
+      "index_150",
+      "index_156",
+      "index_160",
+      "index_167",
+      "index_174",
+    ],
+  },
+  {
     lensTypeCode: "progressive",
     lensOptionCode: "clear",
     lensIndexCodes: [

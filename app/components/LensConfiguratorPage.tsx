@@ -179,7 +179,7 @@ export default function LensConfiguratorPage({
           <LensTypeSelector
             lensTypes={lensTypesWithPrices}
             onSelectLensType={(lensType) => {
-              if (lensType !== "single_vision_distance") return;
+              if (lensType !== "single_vision_distance" && lensType !== "single_vision_reading") return;
               setSelectedVisionTypeCode(lensType);
               setPrescriptionErrors([]);
               setStep(2);
@@ -270,11 +270,11 @@ export default function LensConfiguratorPage({
               const selected: string[] = [];
 
               if (selection.antiFog) {
-                selected.push("anti_fog")
+                selected.push("Anti-fog")
               }
 
               if (selection.blueLight) {
-                selected.push("blue_light_coating")
+                selected.push("Blue-light coating")
               }
 
               setSelectedCoatings(selected)

@@ -78,6 +78,8 @@ export async function loadLensConfiguratorPage(request: Request) {
     }
   }
 
+  console.log("Lens upgrade variant prices:", lensVariantByMinor);
+
   return {
     currencyCode,
     framePriceMinor,

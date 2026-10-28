@@ -120,6 +120,7 @@ export default function ConfigurationReview({
     document.body.appendChild(form);
     form.submit();
   };
+  
   return (
     <section className="w-full bg-white px-5 py-8 md:px-12 md:py-10">
       <div className="w-full">
