@@ -1,19 +1,25 @@
 import { useState } from "react";
-
 import type { LensConfiguratorPageData } from "app/services/lens-configurator-page.server";
 import LensTypeSelector from "./LensTypeSelector";
 import TrustBenefits from "./TrustBenefits";
-import PrescriptionForm, {
-  type PrescriptionData,
-} from "./PrescriptionForm";
+import PrescriptionForm, { type PrescriptionData, } from "./PrescriptionForm";
 import LensTypeConfigurator from "./LensTypeConfigurator";
 import SelectedFrame from "./SelectedFrame";
 import SingleVisionConfigurator from "./SingleVisionConfigurator";
 import ConfigurationReview from "./ConfigurationReview";
-import {
-  validatePrescription,
-  type Prescription,
-} from "app/services/prescription";
+import { validatePrescription, type Prescription, } from "app/services/prescription";
+import { calculatePrice, PriceError } from "app/services/lens-pricing";
+
+type PriceResult = {
+  items: {
+    code: string;
+    label: string;
+    amountMinor: number;
+  }[];
+  frameMinor: number;
+  lensTotalMinor: number;
+  totalMinor: number;
+};
 
 export default function LensConfiguratorPage({
   data,
@@ -29,19 +35,16 @@ export default function LensConfiguratorPage({
   } = data;
 
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
-  const [prescriptionValues, setPrescriptionValues] =
-    useState<PrescriptionData | undefined>();
+  const [prescriptionValues, setPrescriptionValues] = useState<PrescriptionData | undefined>();
   const [prescriptionErrors, setPrescriptionErrors] = useState<string[]>([]);
-  const [selectedVisionTypeCode, setSelectedVisionTypeCode] =
-    useState("single_vision_distance");
+  const [selectedVisionTypeCode, setSelectedVisionTypeCode] = useState("single_vision_distance");
   const [selectedLensIndexCode, setSelectedLensIndexCode] = useState("");
-  const [selectedLensIndex, setSelectedLensIndex] = useState<{
-    code: string;
-    displayName: string;
-    refractiveIndex: number;
-  } | null>(null);
-  const [selectedLensOptionCode, setSelectedLensOptionCode] =
-    useState("clear");
+  const [selectedLensIndex, setSelectedLensIndex] = useState<{ code: string; displayName: string; refractiveIndex: number; } | null>(null);
+  const [selectedLensOptionCode, setSelectedLensOptionCode] = useState("clear");
+  const [priceResult, setPriceResult] = useState<PriceResult | null>(null);
+  const [priceError, setPriceError] = useState("");
+  const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
+
 
   const compatibleIndexCodes = catalog.lensIndexCompatibilities
     .filter(
@@ -88,6 +91,47 @@ export default function LensConfiguratorPage({
       (option) => option.code === selectedLensOptionCode,
     )?.name ?? selectedLensOptionCode;
 
+
+
+  const calculateSelectedPrice = (lensIndexCode: string) => {
+    setIsCalculatingPrice(true)
+    setPriceError("")
+
+    try {
+      const pricing = calculatePrice(
+        catalog,
+        {
+          lensTypeCode: selectedVisionTypeCode,
+          lensIndexCode,
+          optionCodes: [selectedLensOptionCode]
+        },
+        framePriceMinor,
+      );
+
+      setPriceResult(pricing)
+      setPriceError("")
+      setStep(5)
+    } catch (error) {
+      setPriceError(
+        error instanceof Error ? error.message : "Unable to calculate price.",
+      );
+    } finally {
+      setIsCalculatingPrice(false);
+    }
+  }
+
+  const lensTypesWithPrices = catalog.lensTypes.map((lensType) => {
+    const basePrice = lensType.prices.find(
+      (price) => !price.lensIndex
+    )
+
+    return {
+      ...lensType,
+      startingPrice: basePrice?.amountMinor ?? null,
+    }
+  })
+
+
   return (
     <main className="w-full bg-white font-sans">
       <SelectedFrame variantTitle={product.variantTitle} image={product.image} />
@@ -112,7 +156,7 @@ export default function LensConfiguratorPage({
       <div className="w-full">
         {step === 1 && (
           <LensTypeSelector
-            lensTypes={catalog.lensTypes}
+            lensTypes={lensTypesWithPrices}
             onSelectLensType={(lensType) => {
               if (lensType !== "single_vision_distance") return;
               setSelectedVisionTypeCode(lensType);
@@ -158,6 +202,10 @@ export default function LensConfiguratorPage({
           />
         )}
 
+        {step === 4 && priceError && (
+          <p role="alert" className="px-5 text-sm text-red-600 md:px-12">{priceError}</p>
+        )}
+
         {step === 4 && (
           <SingleVisionConfigurator
             currencyCode={currencyCode}
@@ -169,7 +217,7 @@ export default function LensConfiguratorPage({
             onContinue={(index) => {
               setSelectedLensIndex(index);
               setSelectedLensIndexCode(index.code);
-              setStep(5);
+              calculateSelectedPrice(index.code)
             }}
           />
         )}
@@ -182,11 +230,11 @@ export default function LensConfiguratorPage({
             refractiveIndex={selectedLensIndex.refractiveIndex}
             prescription={prescriptionValues}
             framePriceMinor={framePriceMinor}
-            lensPriceMinor={0}
-            totalPriceMinor={framePriceMinor}
+            totalPriceMinor={priceResult?.totalMinor ?? framePriceMinor}
             currencyCode={currencyCode}
             variantId={product.variantId}
             onBack={() => setStep(4)}
+            priceItems={priceResult?.items ?? []}
           />
         )}
       </div>

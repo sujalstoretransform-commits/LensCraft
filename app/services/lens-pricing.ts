@@ -58,6 +58,8 @@ export const calculatePrice = (
         const option = catalog.lensOptions.find((o) => o.code === code)
         if (!option) throw new PriceError(`Unknown option: ${code}`);
 
+        if (option.prices.length === 0) continue;
+
         const optionPrice = getOneprice(option.prices, option.name)
         items.push({ code: optionPrice.code, label: option.name, amountMinor: optionPrice.amountMinor })
     }

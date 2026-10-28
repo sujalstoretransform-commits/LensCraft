@@ -10,6 +10,7 @@ type LensType = {
     code: string;
     name: string;
     description: string | null;
+    startingPrice: number | null;
 };
 
 type LensTypeSelectorProps = {
@@ -90,6 +91,17 @@ export default function LensTypeSelector({
                             <span className="mt-2 whitespace-pre-line text-xs leading-relaxed text-slate-500">
                                 {lens.description}
                             </span>
+
+                            <span className="mt-5 text-sm font-semibold text-blue-600">
+                                {lens.startingPrice !== null
+                                    ? `From ${new Intl.NumberFormat("en-US", {
+                                        style: "currency",
+                                        currency: "USD",
+                                    }).format(lens.startingPrice / 100)}`
+                                    : "Price unavailable"}
+                            </span>
+
+
 
                             <span
                                 className={`mt-auto pt-4 text-lg ${isSelected ? "text-blue-500" : "text-slate-500"

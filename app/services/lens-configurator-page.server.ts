@@ -33,10 +33,10 @@ export async function loadLensConfiguratorPage(request: Request) {
   const requestedCurrency = url.searchParams
     .get("currency")
     ?.toUpperCase();
-  const currencyCode =
-    requestedCurrency && /^[A-Z]{3}$/.test(requestedCurrency)
-      ? requestedCurrency
-      : "USD";
+
+  const currencyCode = requestedCurrency && /^[A-Z]{3}$/.test(requestedCurrency)
+    ? requestedCurrency
+    : "USD";
 
   const catalog = await loadLensCatalog(currencyCode);
   const product = {

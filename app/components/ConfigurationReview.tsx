@@ -1,16 +1,6 @@
 import { useState } from "react";
 import type { PrescriptionData } from "./PrescriptionForm";
 
-declare global {
-    interface Window {
-        Shopify?: {
-            routes?: {
-                root?: string;
-            };
-        };
-    }
-}
-
 type ConfigurationReviewProps = {
     lensTypeName: string;
     lensOptionName: string;
@@ -19,10 +9,14 @@ type ConfigurationReviewProps = {
     prescription: PrescriptionData;
     onBack?: () => void;
     framePriceMinor: number;
-    lensPriceMinor: number;
     totalPriceMinor: number;
     currencyCode: string;
     variantId: string | null;
+    priceItems: {
+        code: string;
+        label: string;
+        amountMinor: number;
+    }[];
 };
 
 export default function ConfigurationReview({
@@ -33,10 +27,10 @@ export default function ConfigurationReview({
     prescription,
     onBack,
     framePriceMinor,
-    lensPriceMinor,
     totalPriceMinor,
     currencyCode,
     variantId,
+    priceItems,
 }: ConfigurationReviewProps
 ) {
     const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -110,35 +104,33 @@ export default function ConfigurationReview({
                     </p>
                 </div>
 
-                <div className="grid w-full grid-cols-1 gap-5 md:grid-cols-2">
-                    <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-3">
-                        <div className="flex min-h-[120px] items-start gap-4 rounded-lg border border-slate-200 bg-slate-50 p-5">
-                            <div className="mt-1 shrink-0 text-xl text-blue-600">◉</div>
-                            <div className="min-w-0">
-                                <p className="text-sm text-slate-500">Lens type</p>
-                                <h2 className="mt-1 text-lg font-semibold text-slate-900">{lensTypeName}</h2>
-                                <p className="mt-1 text-sm text-slate-500">Your selected lens design</p>
-                            </div>
+                <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div className="flex min-h-[120px] items-start gap-4 rounded-lg border border-slate-200 bg-slate-50 p-5">
+                        <div className="mt-1 shrink-0 text-xl text-blue-600">◉</div>
+                        <div className="min-w-0">
+                            <p className="text-sm text-slate-500">Lens type</p>
+                            <h2 className="mt-1 text-lg font-semibold text-slate-900">{lensTypeName}</h2>
+                            <p className="mt-1 text-sm text-slate-500">Your selected lens design</p>
                         </div>
+                    </div>
 
-                        <div className="flex min-h-[120px] items-start gap-4 rounded-lg border border-slate-200 bg-slate-50 p-5">
-                            <div className="mt-1 shrink-0 text-xl text-blue-600">◎</div>
-                            <div className="min-w-0">
-                                <p className="text-sm text-slate-500">Lens option</p>
-                                <h2 className="mt-1 text-lg font-semibold text-slate-900">{lensOptionName}</h2>
-                                <p className="mt-1 text-sm text-slate-500">Your selected lens feature</p>
-                            </div>
+                    <div className="flex min-h-[120px] items-start gap-4 rounded-lg border border-slate-200 bg-slate-50 p-5">
+                        <div className="mt-1 shrink-0 text-xl text-blue-600">◎</div>
+                        <div className="min-w-0">
+                            <p className="text-sm text-slate-500">Lens option</p>
+                            <h2 className="mt-1 text-lg font-semibold text-slate-900">{lensOptionName}</h2>
+                            <p className="mt-1 text-sm text-slate-500">Your selected lens feature</p>
                         </div>
+                    </div>
 
-                        <div className="flex min-h-[120px] items-start gap-4 rounded-lg border border-slate-200 bg-slate-50 p-5">
-                            <div className="mt-1 shrink-0 text-xl text-blue-600">◎</div>
-                            <div className="min-w-0">
-                                <p className="text-sm text-slate-500">Lens index</p>
-                                <h2 className="mt-1 text-lg font-semibold text-slate-900">{lensIndexName}</h2>
-                                <p className="mt-1 text-sm text-slate-500">
-                                    Refractive index: {refractiveIndex.toFixed(2)}
-                                </p>
-                            </div>
+                    <div className="flex min-h-[120px] items-start gap-4 rounded-lg border border-slate-200 bg-slate-50 p-5">
+                        <div className="mt-1 shrink-0 text-xl text-blue-600">◎</div>
+                        <div className="min-w-0">
+                            <p className="text-sm text-slate-500">Lens index</p>
+                            <h2 className="mt-1 text-lg font-semibold text-slate-900">{lensIndexName}</h2>
+                            <p className="mt-1 text-sm text-slate-500">
+                                Refractive index: {refractiveIndex.toFixed(2)}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -217,20 +209,24 @@ export default function ConfigurationReview({
                                 {formatPrice(framePriceMinor)}
                             </span>
                         </div>
-                        <div className="flex justify-between gap-4">
-                            <span className="text-slate-600">Lens price</span>
-                            <span className="font-medium text-slate-900">
-                                {formatPrice(lensPriceMinor)}
-                            </span>
-                        </div>
+
+                        {priceItems.map((item) => (
+                            <div
+                                key={item.code}
+                                className="flex justify-between gap-4"
+                            >
+                                <span className="text-slate-600">{item.label}</span>
+                                <span className="font-medium text-slate-900">
+                                    {formatPrice(item.amountMinor)}
+                                </span>
+                            </div>
+                        ))}
+
                         <div className="flex justify-between gap-4 border-t border-slate-200 pt-3 text-base">
-                            <span className="font-semibold text-slate-900">
-                                Total
-                            </span>
-                            <span className="font-bold text-slate-900">
-                                {formatPrice(totalPriceMinor)}
-                            </span>
+                            <span className="font-semibold text-slate-900">Total</span>
+                            <span className="font-bold text-slate-900">{formatPrice(totalPriceMinor)}</span>
                         </div>
+
                     </div>
                 </div>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
