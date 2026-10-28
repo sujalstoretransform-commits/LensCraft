@@ -1,0 +1,47 @@
+import prisma from "app/db.server";
+
+const lensTypeOptions = [
+    {
+        code: "clear",
+        name: "Clear",
+        category: "lens_type" as const,
+        description: "Everyday clear lenses for natural vision.",
+    },
+    {
+        code: "blue_light",
+        name: "Blue-Light Filtering",
+        category: "lens_type" as const,
+        description: "Designed to filter some blue light from digital screens.",
+    },
+    {
+        code: "light_adaptive",
+        name: "Light-Adaptive",
+        category: "lens_type" as const,
+        description: "Lenses that adapt to changing light conditions.",
+    },
+    {
+        code: "tinted",
+        name: "Tinted",
+        category: "lens_type" as const,
+        description: "Tinted lenses for your preferred look and light conditions.",
+    },
+    {
+        code: "polarized",
+        name: "Polarized",
+        category: "lens_type" as const,
+        description: "Designed to reduce glare from reflective surfaces.",
+    },
+];
+
+for (const option of lensTypeOptions) {
+    await prisma.lensOption.upsert({
+        where: { code: option.code },
+        update: {
+            name: option.name,
+            category: option.category,
+            description: option.description,
+            active: true,
+        },
+        create: option,
+    });
+}

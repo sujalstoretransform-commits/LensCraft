@@ -1,6 +1,8 @@
 import { reactRouter } from "@react-router/dev/vite";
 import { defineConfig, type UserConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
+import tailwindcss from "@tailwindcss/vite";
+import 'dotenv/config'
 
 // Related: https://github.com/remix-run/remix/issues/2835#issuecomment-1144102176
 // Replace the HOST env var with SHOPIFY_APP_URL so that it doesn't break the Vite server.
@@ -35,11 +37,20 @@ if (host === "localhost") {
   };
 }
 
+// Public URL of this app (the tunnel URL in dev). Used to make asset URLs
+// absolute so they still load when the page is served through the storefront
+// app proxy (https://<store>/apps/lenscraft).
+const appUrl = process.env.SHOPIFY_APP_URL || "";
+
 export default defineConfig({
+  base: appUrl ? `${appUrl}/` : "/",
   server: {
+    origin: appUrl,
     allowedHosts: [host],
+    // Let the storefront (…myshopify.com) load scripts/styles from this server.
+    // If your store uses a custom domain, add it here, e.g. "https://www.example.com"
     cors: {
-      preflightContinue: true,
+      origin: [/\.myshopify\.com$/],
     },
     port: Number(process.env.PORT || 3000),
     hmr: hmrConfig,
@@ -49,6 +60,7 @@ export default defineConfig({
     },
   },
   plugins: [
+    tailwindcss(),
     reactRouter(),
     tsconfigPaths(),
   ],

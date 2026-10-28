@@ -4,8 +4,6 @@ import { redirect, Form, useActionData, useLoaderData } from "react-router";
 import { login } from "../../shopify.server";
 import { loginErrorMessage } from "./error.server";
 
-import styles from "./styles.module.css";
-
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
 
@@ -28,39 +26,39 @@ export default function App() {
   const errors = actionData?.errors;
 
   return (
-    <div className={styles.index}>
-      <div className={styles.content}>
-        <h1 className={styles.heading}>A short heading about [your app]</h1>
-        <p className={styles.text}>
+    <main className="flex min-h-screen w-full items-center justify-center p-4 text-center">
+      <div className="grid gap-8">
+        <h1 className="m-0 p-0">A short heading about [your app]</h1>
+        <p className="m-0 p-0 pb-8 text-[1.2rem]">
           A tagline about [your app] that describes your value proposition.
         </p>
         {showForm && (
-          <Form className={styles.form} method="post">
-            <label className={styles.label}>
+          <Form className="mx-auto flex items-center justify-start gap-4" method="post">
+            <label className="grid max-w-80 gap-[0.2rem] text-left text-base">
               <span>Shop domain</span>
-              <input className={styles.input} type="text" name="shop" />
+              <input className="p-1.5" type="text" name="shop" />
               <span>{errors?.shop ?? "e.g: my-shop-domain.myshopify.com"}</span>
             </label>
-            <button className={styles.button} type="submit">
+            <button className="p-1.5" type="submit">
               Log in
             </button>
           </Form>
         )}
-        <ul className={styles.list}>
-          <li>
+        <ul className="m-0 flex list-none gap-8 p-0 pt-12 max-[50rem]:block">
+          <li className="max-w-80 text-left max-[50rem]:pb-4">
             <strong>Product feature</strong>. Some detail about your feature and
             its benefit to your customer.
           </li>
-          <li>
+          <li className="max-w-80 text-left max-[50rem]:pb-4">
             <strong>Product feature</strong>. Some detail about your feature and
             its benefit to your customer.
           </li>
-          <li>
+          <li className="max-w-80 text-left">
             <strong>Product feature</strong>. Some detail about your feature and
             its benefit to your customer.
           </li>
         </ul>
       </div>
-    </div>
+    </main>
   );
 }
