@@ -7,15 +7,11 @@ import LensTypeConfigurator from "./LensTypeConfigurator";
 import SelectedFrame from "./SelectedFrame";
 import SingleVisionConfigurator from "./SingleVisionConfigurator";
 import ConfigurationReview from "./ConfigurationReview";
-import {
-  validatePrescription,
-  type Prescription,
-} from "app/services/prescription";
+import { validatePrescription, type Prescription, } from "app/services/prescription";
 import { calculatePrice, PriceError } from "app/services/lens-pricing";
-import PrescriptionSelection, {
-  PrescriptionMethod,
-} from "./PrescriptionSelection";
+import PrescriptionSelection, { PrescriptionMethod } from "./PrescriptionSelection";
 import CoatingReview, { CoatingSelection } from "./CoatingReview";
+import LensTechnologySelector, { type LensTechnologyColor, } from "./LensTechnologySelector";
 
 type PriceResult = {
   items: {
@@ -43,13 +39,9 @@ export default function LensConfiguratorPage({
   } = data;
 
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8>(1);
-  const [prescriptionValues, setPrescriptionValues] = useState<
-    PrescriptionData | undefined
-  >();
+  const [prescriptionValues, setPrescriptionValues] = useState<PrescriptionData | undefined>();
   const [prescriptionErrors, setPrescriptionErrors] = useState<string[]>([]);
-  const [selectedVisionTypeCode, setSelectedVisionTypeCode] = useState(
-    "single_vision_distance",
-  );
+  const [selectedVisionTypeCode, setSelectedVisionTypeCode] = useState("single_vision_distance",);
   const [selectedLensIndexCode, setSelectedLensIndexCode] = useState("");
   const [selectedLensIndex, setSelectedLensIndex] = useState<{
     code: string;
@@ -68,13 +60,27 @@ export default function LensConfiguratorPage({
 
   const [selectedCoatings, setSelectedCoatings] = useState<string[]>([]);
 
-  const compatibleIndexCodes = catalog.lensIndexCompatibilities
-    .filter(
-      (compatibility) =>
-        compatibility.lensType.code === selectedVisionTypeCode &&
-        compatibility.lensOption.code === selectedLensOptionCode,
-    )
-    .map((compatibility) => compatibility.lensIndex.code);
+  const [selectedTechnologyCode, setSelectedTechnologyCode] = useState("");
+  const [selectedTechnologyColor, setSelectedTechnologyColor] = useState<"GREY" | "AMBER">("GREY");
+
+  const selectedTechnologyName = catalog.lensTechnology.find((technology) => technology.code === selectedTechnologyCode)?.name
+
+  const compatibleIndexCodes =
+    selectedLensOptionCode === "light_adaptive" &&
+      selectedTechnologyCode
+      ? catalog.lensTechnologyIndexCompatibility
+        .filter(
+          (compatibility) =>
+            compatibility.lensTechnology.code === selectedTechnologyCode
+        )
+        .map((compatibility) => compatibility.lensIndex.code)
+      : catalog.lensIndexCompatibilities
+        .filter(
+          (compatibility) =>
+            compatibility.lensType.code === selectedVisionTypeCode &&
+            compatibility.lensOption.code === selectedLensOptionCode,
+        )
+        .map((compatibility) => compatibility.lensIndex.code);
 
   const handlePrescriptionContinue = (values: PrescriptionData) => {
     const toNumber = (value: string) =>
@@ -160,10 +166,10 @@ export default function LensConfiguratorPage({
       <section className="border-b border-slate-200 px-5 py-5 md:px-12">
         <div className="w-full">
           <p className="text-sm font-semibold text-slate-500">
-            STEP {step} OF 7
+            STEP {step} OF 8
           </p>
           <div className="mt-3 flex gap-2">
-            {[1, 2, 3, 4, 5, 6, 7].map((progressStep) => (
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((progressStep) => (
               <div
                 key={progressStep}
                 className={`h-1.5 flex-1 rounded-full ${step >= progressStep ? "bg-slate-900" : "bg-slate-200"
@@ -225,11 +231,7 @@ export default function LensConfiguratorPage({
         {step === 4 && (
           <LensTypeConfigurator
             lensOptions={catalog.lensOptions.filter(
-              (
-                option,
-              ): option is typeof option & {
-                category: "lens_type";
-              } => option.category === "lens_type",
+              (option): option is typeof option & { category: "lens_type" } => option.category === "lens_type",
             )}
             onBack={() => setStep(3)}
             onContinue={(lensOptionCode) => {
@@ -239,9 +241,29 @@ export default function LensConfiguratorPage({
               const defaultIndex = lensIndices.find((index) => compatibleIndexCodes.includes(index.code) && Number(index.refractiveIndex) === 1.5)
 
               setSelectedLensIndexCode(defaultIndex?.code ?? "");
-              setStep(5);
+
+              if (lensOptionCode === 'light_adaptive') {
+                setStep(5)
+              }
+              else {
+                setSelectedTechnologyCode("")
+                setSelectedTechnologyColor("GREY")
+                setStep(6)
+              }
             }}
             initialValue={selectedLensOptionCode}
+          />
+        )}
+
+        {step === 5 && selectedLensOptionCode === 'light_adaptive' && (
+          <LensTechnologySelector
+            technologies={catalog.lensTechnology}
+            selectedTechnologyCode={selectedTechnologyCode}
+            selectedColor={selectedTechnologyColor}
+            onSelectTechnology={setSelectedTechnologyCode}
+            onSelectColor={setSelectedTechnologyColor}
+            onBack={() => setStep(4)}
+            onContinue={() => setStep(6)}
           />
         )}
 
@@ -251,29 +273,37 @@ export default function LensConfiguratorPage({
           </p>
         )}
 
-        {step === 5 && (
+        {step === 6 && (
           <SingleVisionConfigurator
             currencyCode={currencyCode}
             lensIndices={lensIndices}
             compatibleIndexCodes={compatibleIndexCodes}
             lensTypeCode={selectedVisionTypeCode}
             lensOptionCode={selectedLensOptionCode}
-            onBack={() => setStep(4)}
+            onBack={() => {
+              if (selectedLensOptionCode === 'light_adaptive') {
+                setStep(5)
+              }
+              else {
+                setStep(4)
+              }
+            }}
             onContinue={(index) => {
               setSelectedLensIndex(index);
               setSelectedLensIndexCode(index.code);
-              setStep(6)
+              setStep(7)
             }}
             selectedIndexCode={selectedLensIndexCode}
             onSelectIndex={setSelectedLensIndexCode}
           />
         )}
 
-        {step === 6 && selectedLensIndex && (
+        {step === 7 && selectedLensIndex && (
           <CoatingReview
             lensOptionCode={selectedLensOptionCode}
             initialSelection={coatingSelection}
-            onBack={() => setStep(5)}
+            selectedTechnologyCode={selectedTechnologyCode}
+            onBack={() => setStep(6)}
             onContinue={(selection) => {
               setCoatingSelection(selection)
 
@@ -304,12 +334,12 @@ export default function LensConfiguratorPage({
                 selectedLensIndex.code,
                 optionCodes,
               )
-              setStep(7)
+              setStep(8)
             }}
           />
         )}
 
-        {step === 7 && selectedLensIndex && prescriptionValues && (
+        {step === 8 && selectedLensIndex && prescriptionValues && (
           <ConfigurationReview
             lensTypeName={selectedLensTypeName}
             lensOptionName={selectedLensOptionName}
@@ -324,9 +354,11 @@ export default function LensConfiguratorPage({
             totalPriceMinor={priceResult?.totalMinor ?? framePriceMinor}
             currencyCode={currencyCode}
             variantId={product.variantId}
-            onBack={() => setStep(6)}
+            onBack={() => setStep(7)}
             priceItems={priceResult?.items ?? []}
             selectedCoatings={selectedCoatings}
+            selectedTechnologyName={selectedTechnologyName ?? ""}
+            selectedTechnologyColor={selectedTechnologyColor}
           />
         )}
       </div>

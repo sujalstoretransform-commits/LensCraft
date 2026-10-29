@@ -28,6 +28,28 @@ const compatibility = [
     ],
   },
   {
+    lensTypeCode: "single_vision_distance",
+    lensOptionCode: "light_adaptive",
+    lensIndexCodes: [
+      "index_150",
+      "index_156",
+      "index_160",
+      "index_167",
+      "index_174",
+    ],
+  },
+  {
+    lensTypeCode: "single_vision_reading",
+    lensOptionCode: "light_adaptive",
+    lensIndexCodes: [
+      "index_150",
+      "index_156",
+      "index_160",
+      "index_167",
+      "index_174",
+    ],
+  },
+  {
     lensTypeCode: "single_vision_reading",
     lensOptionCode: "clear",
     lensIndexCodes: [

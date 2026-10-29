@@ -133,14 +133,45 @@ const getLensIndexCompatibilities = () => {
     });
 }
 
+const getLensTechnologyIndexCompatibility = () => {
+    return prisma.lensTechnologyIndexCompatibility.findMany({
+        where: {
+            active: true,
+            lensTechnology: { active: true },
+            lensIndex: { active: true }
+        },
+        select: {
+            lensIndex: { select: { code: true } },
+            lensTechnology: { select: { code: true } }
+        }
+    })
+}
+
+
+
+const getLensTechnologies = () => {
+    return prisma.lensTechnology.findMany({
+        where: { active: true },
+        orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+        select: {
+            id: true,
+            code: true,
+            name: true,
+            description: true,
+            sortOrder: true,
+        },
+    });
+}
 export const loadLensCatalog = async (currencyCode: string) => {
-    const [lensTypes, lensIndices, lensOptions, rules, lensIndexCompatibilities] = await Promise.all([
+    const [lensTypes, lensIndices, lensOptions, rules, lensIndexCompatibilities, lensTechnologies, lensTechnologyIndexCompatibility] = await Promise.all([
         getLensTypes(currencyCode),
         getLensIndices(currencyCode),
         getLensOptions(currencyCode),
         getRules(),
         getLensIndexCompatibilities(),
+        getLensTechnologies(),
+        getLensTechnologyIndexCompatibility()
     ]);
 
-    return { lensTypes, lensIndices, lensOptions, rules, lensIndexCompatibilities };
+    return { lensTypes, lensIndices, lensOptions, rules, lensIndexCompatibilities, lensTechnologies, lensTechnologyIndexCompatibility };
 }

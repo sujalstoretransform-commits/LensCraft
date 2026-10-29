@@ -43,9 +43,7 @@ export default function SingleVisionConfigurator({
     onSelectIndex,
 }: SingleVisionConfiguratorProps
 ) {
-    const availableIndices = lensIndices.filter((index) =>
-        compatibleIndexCodes.includes(index.code)
-    )
+    const availableIndices = lensIndices.filter((index) => compatibleIndexCodes.includes(index.code))
 
     const selectedIndex = availableIndices.find((index) => index.code === selectedIndexCode)
 
@@ -142,34 +140,35 @@ export default function SingleVisionConfigurator({
                             })}
                         </div>
 
-                        <div className="mt-8 flex items-center justify-between gap-4 border-t border-slate-100 pt-6">
-                            <button
-                                type="button"
-                                onClick={onBack}
-                                className="rounded-lg border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                            >
-                                Back
-                            </button>
 
-                            <button
-                                type="button"
-                                disabled={!selectedIndex}
-                                onClick={() => {
-                                    if (!selectedIndex) return;
-
-                                    onContinue?.({
-                                        code: selectedIndex.code,
-                                        displayName: selectedIndex.displayName,
-                                        refractiveIndex: Number(selectedIndex.refractiveIndex)
-                                    })
-                                }}
-                                className="rounded-lg bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-                            >
-                                Continue
-                            </button>
-                        </div>
                     </>
                 )}
+            </div>
+            <div className="mt-8 flex items-center justify-between gap-4 border-t border-slate-100 pt-6">
+                <button
+                    type="button"
+                    onClick={onBack}
+                    className="rounded-lg border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                >
+                    Back
+                </button>
+
+                <button
+                    type="button"
+                    disabled={!selectedIndex}
+                    onClick={() => {
+                        if (!selectedIndex) return;
+
+                        onContinue?.({
+                            code: selectedIndex.code,
+                            displayName: selectedIndex.displayName,
+                            refractiveIndex: Number(selectedIndex.refractiveIndex)
+                        })
+                    }}
+                    className="rounded-lg bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                >
+                    Continue
+                </button>
             </div>
         </section>
     )
