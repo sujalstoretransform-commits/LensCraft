@@ -55,14 +55,6 @@ export default function PrescriptionForm(
     return (
         <section className="w-full bg-white px-5 py-8 md:px-12">
             <div className="w-full">
-                <button
-                    type="button"
-                    onClick={onBack}
-                    className="mb-6 text-sm font-medium text-slate-600 hover:text-slate-900"
-                >
-                    ← Back to lens index
-                </button>
-
                 <div className="mb-8">
                     <p className="text-sm font-semibold text-blue-600">
                         LENS CONFIGURATION
@@ -83,13 +75,13 @@ export default function PrescriptionForm(
                 </div>
 
                 <div className="overflow-x-auto rounded-xl border border-slate-200">
-                    <table className="w-full min-w-150 text-left">
+                    <table className="w-full min-w-[680px] table-fixed text-left">
                         <thead className="bg-slate-50">
                             <tr>
-                                <th className="p-4 text-sm font-semibold">Eye</th>
-                                <th className="p-4 text-sm font-semibold">SPH</th>
-                                <th className="p-4 text-sm font-semibold">CYL</th>
-                                <th className="p-4 text-sm font-semibold">Axis</th>
+                                <th className="w-36 p-4 text-sm font-semibold">Eye</th>
+                                <th className="w-44 p-4 text-sm font-semibold">SPH</th>
+                                <th className="w-44 p-4 text-sm font-semibold">CYL</th>
+                                <th className="w-44 p-4 text-sm font-semibold">Axis</th>
                             </tr>
                         </thead>
 
@@ -206,7 +198,14 @@ export default function PrescriptionForm(
                     </div>
                 )}
 
-                <div className="mt-8 flex justify-end border-t border-slate-200 pt-5">
+                <div className="mt-8 flex items-center justify-between gap-4 border-t border-slate-100 pt-6">
+                    <button
+                        type="button"
+                        onClick={onBack}
+                        className="rounded-lg border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    >
+                        Back
+                    </button>
                     <button
                         type="button"
                         onClick={() => onContinue(prescription)}

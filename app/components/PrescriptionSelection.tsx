@@ -49,8 +49,7 @@ export default function PrescriptionSelection({
   onBack,
   onContinue,
 }: PrescriptionSelectionProps) {
-  const [selectedMethod, setSelectedMethod] =
-    useState<PrescriptionMethod | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<PrescriptionMethod | null>("manual");
 
   return (
     <section className="w-full bg-white px-4 py-8 sm:px-6">

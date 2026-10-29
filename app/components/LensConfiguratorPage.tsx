@@ -99,9 +99,9 @@ export default function LensConfiguratorPage({
       return;
     }
 
+    setStep(4);
     setPrescriptionValues(values);
     setPrescriptionErrors([]);
-    setStep(4);
   };
 
   const selectedLensTypeName =
@@ -160,7 +160,7 @@ export default function LensConfiguratorPage({
       <section className="border-b border-slate-200 px-5 py-5 md:px-12">
         <div className="w-full">
           <p className="text-sm font-semibold text-slate-500">
-            STEP {step} OF 8
+            STEP {step} OF 7
           </p>
           <div className="mt-3 flex gap-2">
             {[1, 2, 3, 4, 5, 6, 7].map((progressStep) => (
@@ -177,13 +177,18 @@ export default function LensConfiguratorPage({
       <div className="w-full">
         {step === 1 && (
           <LensTypeSelector
+            selectedLensTypeCode={selectedVisionTypeCode}
             lensTypes={lensTypesWithPrices}
             onSelectLensType={(lensType) => {
               if (lensType !== "single_vision_distance" && lensType !== "single_vision_reading") return;
               setSelectedVisionTypeCode(lensType);
+              setSelectedLensIndex(null);
+              setSelectedLensIndexCode("")
+              setPriceResult(null)
+              setPriceError("")
               setPrescriptionErrors([]);
-              setStep(2);
             }}
+            onContinue={() => setStep(2)}
           />
         )}
 
@@ -230,7 +235,10 @@ export default function LensConfiguratorPage({
             onContinue={(lensOptionCode) => {
               setSelectedLensOptionCode(lensOptionCode);
               setSelectedLensIndex(null);
-              setSelectedLensIndexCode("");
+
+              const defaultIndex = lensIndices.find((index) => compatibleIndexCodes.includes(index.code) && Number(index.refractiveIndex) === 1.5)
+
+              setSelectedLensIndexCode(defaultIndex?.code ?? "");
               setStep(5);
             }}
             initialValue={selectedLensOptionCode}
@@ -256,6 +264,8 @@ export default function LensConfiguratorPage({
               setSelectedLensIndexCode(index.code);
               setStep(6)
             }}
+            selectedIndexCode={selectedLensIndexCode}
+            onSelectIndex={setSelectedLensIndexCode}
           />
         )}
 

@@ -120,14 +120,12 @@ export default function ConfigurationReview({
     document.body.appendChild(form);
     form.submit();
   };
-  
+
   return (
-    <section className="w-full bg-white px-5 py-8 md:px-12 md:py-10">
+    <section className="w-full bg-white px-5 py-8 md:px-12">
       <div className="w-full">
         <div className="mb-8">
-          <p className="text-sm font-medium text-blue-600">Step 5 of 5</p>
-
-          <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
+          <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">
             Review Your Configuration
           </h1>
 

@@ -36,17 +36,10 @@ export default function LensTypeConfigurator({
     return (
         <section className="w-full bg-white px-5 py-8 md:px-12">
             <div className="w-full">
-                <button
-                    type="button"
-                    onClick={onBack}
-                    className="mb-6 text-sm font-medium text-slate-600 transition hover:text-slate-900"
-                >
-                    ← Back to prescription
-                </button>
 
                 <div className="mb-8">
                     <p className="text-sm font-semibold text-blue-600">
-                        LENS CONFIGURATION · STEP 4
+                        LENS CONFIGURATION
                     </p>
 
                     <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
@@ -98,8 +91,14 @@ export default function LensTypeConfigurator({
                     })}
                 </div>
 
-                <div className="mt-8 flex justify-end border-t border-slate-200 pt-5">
+                <div className="mt-8 flex items-center justify-between gap-4 border-t border-slate-100 pt-6">
                     <button
+                        type="button"
+                        onClick={onBack}
+                        className="rounded-lg border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    >
+                        Back
+                    </button>                    <button
                         type="button"
                         onClick={() => onContinue(selectedType)}
                         className="rounded-lg bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"

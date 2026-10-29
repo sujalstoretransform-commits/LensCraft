@@ -1,5 +1,3 @@
-import { useState } from 'react'
-
 type SingleVisionConfiguratorProps = {
     currencyCode: string;
     lensIndices: {
@@ -29,6 +27,8 @@ type SingleVisionConfiguratorProps = {
         displayName: string;
         refractiveIndex: number;
     }) => void;
+    selectedIndexCode: string;
+    onSelectIndex: (indexCode: string) => void;
 }
 
 export default function SingleVisionConfigurator({
@@ -39,10 +39,10 @@ export default function SingleVisionConfigurator({
     lensOptionCode,
     onBack,
     onContinue,
+    selectedIndexCode,
+    onSelectIndex,
 }: SingleVisionConfiguratorProps
 ) {
-    const [selectedIndexCode, setSelectedIndexCode] = useState("");
-
     const availableIndices = lensIndices.filter((index) =>
         compatibleIndexCodes.includes(index.code)
     )
@@ -58,14 +58,6 @@ export default function SingleVisionConfigurator({
     return (
         <section className="w-full bg-white px-5 py-8 md:px-12">
             <div className="w-full">
-                <button
-                    type="button"
-                    onClick={onBack}
-                    className="mb-6 text-sm font-medium text-slate-600 hover:text-slate-900"
-                >
-                    ← Back to lens types
-                </button>
-
                 <div className="mb-8">
                     <p className="text-sm font-semibold text-blue-600">
                         LENS CONFIGURATION
@@ -107,7 +99,7 @@ export default function SingleVisionConfigurator({
                                         key={index.code}
                                         type="button"
                                         aria-pressed={isSelected}
-                                        onClick={() => setSelectedIndexCode(index.code)}
+                                        onClick={() => onSelectIndex(index.code)}
                                         className={`relative rounded-xl border bg-white p-5 text-left transition ${isSelected
                                             ? "border-blue-600 ring-2 ring-blue-100"
                                             : "border-slate-200 hover:border-slate-400"
@@ -150,12 +142,14 @@ export default function SingleVisionConfigurator({
                             })}
                         </div>
 
-                        <div className="mt-8 flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
-                            <p className="text-sm text-slate-600">
-                                {selectedIndex
-                                    ? `${selectedIndex.displayName} selected`
-                                    : "Choose a lens index to continue."}
-                            </p>
+                        <div className="mt-8 flex items-center justify-between gap-4 border-t border-slate-100 pt-6">
+                            <button
+                                type="button"
+                                onClick={onBack}
+                                className="rounded-lg border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                            >
+                                Back
+                            </button>
 
                             <button
                                 type="button"
