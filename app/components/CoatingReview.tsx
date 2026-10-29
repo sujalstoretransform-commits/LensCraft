@@ -1,3 +1,4 @@
+import { LensTechnologyColor } from "@prisma/client";
 import { Check, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 
@@ -9,6 +10,7 @@ export type CoatingSelection = {
 type CoatingReviewProps = {
     lensOptionCode: string;
     initialSelection?: CoatingSelection;
+    selectedTechnologyCode: string,
     onBack: () => void;
     onContinue: (selection: CoatingSelection) => void;
 };
@@ -23,6 +25,7 @@ const includedCoatings = [
 export default function CoatingReview({
     lensOptionCode,
     initialSelection,
+    selectedTechnologyCode,
     onBack,
     onContinue,
 }: CoatingReviewProps) {
@@ -33,7 +36,12 @@ export default function CoatingReview({
         },
     );
 
-    const isClearLens = lensOptionCode === "clear";
+    const showBlueLightCoating =
+        lensOptionCode === "clear" ||
+        (lensOptionCode === 'light_adaptive' &&
+            selectedTechnologyCode !== "standard_light_adaptive_blue_light" &&
+            selectedTechnologyCode !== "in_car_light_adaptive_blue_light"
+        )
 
     function toggleOption(option: keyof CoatingSelection) {
         setSelection((current) => ({
@@ -122,7 +130,7 @@ export default function CoatingReview({
                                 </span>
                             </label>
 
-                            {isClearLens && (
+                            {showBlueLightCoating && (
                                 <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-4 transition hover:border-blue-300 hover:bg-blue-50/30">
                                     <input
                                         type="checkbox"

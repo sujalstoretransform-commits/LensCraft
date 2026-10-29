@@ -90,6 +90,8 @@ export async function loadLensConfiguratorPage(request: Request) {
       lensTypes: catalog.lensTypes,
       lensOptions: catalog.lensOptions,
       lensIndexCompatibilities: catalog.lensIndexCompatibilities,
+      lensTechnology: catalog.lensTechnologies,
+      lensTechnologyIndexCompatibility: catalog.lensTechnologyIndexCompatibility,
     },
   };
 }

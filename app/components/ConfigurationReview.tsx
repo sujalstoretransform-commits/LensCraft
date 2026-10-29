@@ -20,6 +20,8 @@ type ConfigurationReviewProps = {
     amountMinor: number;
   }[];
   selectedCoatings: string[];
+  selectedTechnologyName: string;
+  selectedTechnologyColor: "GREY" | "AMBER";
 };
 
 export default function ConfigurationReview({
@@ -37,7 +39,10 @@ export default function ConfigurationReview({
   variantId,
   priceItems,
   selectedCoatings,
-}: ConfigurationReviewProps) {
+  selectedTechnologyName,
+  selectedTechnologyColor
+}: ConfigurationReviewProps
+) {
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [cartError, setCartError] = useState<string | null>(null);
 
@@ -79,6 +84,8 @@ export default function ConfigurationReview({
       "Left CYL": prescription.leftCyl || "0",
       "Left Axis": prescription.leftAxis || "N/A",
       "Selected Coating": selectedCoatings.length > 0 ? selectedCoatings.join(", ") : "None",
+      "Selected Technology": selectedTechnologyName || "N/A",
+      "Selected Technology Color": selectedTechnologyColor,
       PD: prescription.pd || "N/A",
     };
 
@@ -174,6 +181,42 @@ export default function ConfigurationReview({
             </div>
           </div>
         </div>
+
+        {selectedTechnologyName && (
+          <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-5">
+            <p className="text-sm font-medium text-slate-500">
+              SELECTED LENS TECHNOLOGY
+            </p>
+
+            <div className="mt-3 flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">
+                  {selectedTechnologyName}
+                </h2>
+
+                <p className="mt-1 text-sm text-slate-600">
+                  Lens color:{" "}
+                  {selectedTechnologyColor === "GREY"
+                    ? "Grey"
+                    : "Amber"
+                  }
+                </p>
+              </div>
+
+              <span
+                className={`size-9 shrink-0 rounded-full border border-slate-300 ${selectedTechnologyColor === "GREY"
+                  ? "bg-slate-500"
+                  : "bg-amber-500"
+                  }`}
+                role="img"
+                aria-label={`Selected lens color: ${selectedTechnologyColor === "GREY"
+                  ? "Grey"
+                  : "Amber"
+                  }`}
+              />
+            </div>
+          </div>
+        )}
 
         {selectedCoatings.length > 0 && (
           <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-5">
