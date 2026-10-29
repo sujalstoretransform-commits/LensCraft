@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "2e9af514b9f856455cc71143ae2332e0"
-application_url = "https://example.com"
+application_url = "https://lens-craft-git-dev-shopify-22b2.vercel.app"
 embedded = true
 name = "LensCraft"
 
@@ -45,7 +45,7 @@ api_version = "2027-01"
   topics = [ "app/scopes_update" ]
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [ "https://lens-craft-git-dev-shopify-22b2.vercel.app/auth/callback" ]
 
 [build]
 automatically_update_urls_on_dev = true
