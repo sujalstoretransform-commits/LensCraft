@@ -40,7 +40,7 @@ if (host === "localhost") {
 // Public URL of this app (the tunnel URL in dev). Used to make asset URLs
 // absolute so they still load when the page is served through the storefront
 // app proxy (https://<store>/apps/lenscraft).
-const appUrl = process.env.SHOPIFY_APP_URL || "";
+const appUrl = process.env.SHOPIFY_APP_URL || "/";
 
 export default defineConfig({
   base: appUrl ? `${appUrl}/` : "/",

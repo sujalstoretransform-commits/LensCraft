@@ -1,4 +1,4 @@
-import { unauthenticated } from "../shopify.server";
+import { authenticate } from "../shopify.server";
 import { loadLensCatalog } from "./lens-catalog.server";
 
 const SHOP_REGEX = /^[a-z0-9][a-z0-9-]*\.myshopify\.com$/;
@@ -24,15 +24,9 @@ const safeImageUrl = (raw: string | null): string | null => {
 export async function loadLensConfiguratorPage(request: Request) {
   const url = new URL(request.url);
 
-  const shop = url.searchParams.get("shop") ?? "";
-  if (!SHOP_REGEX.test(shop)) {
-    throw new Response("Invalid shop", { status: 400 });
-  }
+  const { admin } = await authenticate.public.appProxy(request);
 
-  const { admin } = await unauthenticated.admin(shop).catch((error) => {
-    console.log("No offline session for shop:", shop, error);
-    throw new Response("App is not installed on this store", { status: 404 })
-  })
+  const shop = url.searchParams.get("shop") ?? "";
 
   const requestedCurrency = url.searchParams.get("currency")?.toUpperCase();
 

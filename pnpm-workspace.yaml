@@ -9,3 +9,5 @@ allowBuilds:
   esbuild: true
   prisma: true
   unrs-resolver: true
+overrides:
+  qs: "^6.16.0"
