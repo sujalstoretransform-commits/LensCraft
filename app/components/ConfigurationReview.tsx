@@ -113,21 +113,8 @@ export default function ConfigurationReview({
       });
     }
 
-    const form = document.createElement("form");
-    form.acceptCharset = "UTF-8";
-    form.method = "POST";
-    form.action = `https://${shop}/cart/add`;
-
-    Object.entries(fields).forEach(([name, value]) => {
-      const input = document.createElement("input");
-      input.type = "hidden";
-      input.name = name;
-      input.value = value;
-      form.appendChild(input);
-    });
-
-    document.body.appendChild(form);
-    form.submit();
+    const params = new URLSearchParams(fields);
+    window.location.href = `https://${shop}/apps/lenscraft/add?${params.toString()}`;
   };
 
   return (

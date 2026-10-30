@@ -51,6 +51,6 @@ redirect_urls = [ "https://lens-craft-five.vercel.app/auth/callback" ]
 automatically_update_urls_on_dev = true
 
 [app_proxy]
-url = "https://lens-craft-five.vercel.app/app"
+url = "https://lens-craft-five.vercel.app/proxy"
 prefix = "apps"
 subpath = "lenscraft"
