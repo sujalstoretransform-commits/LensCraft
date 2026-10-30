@@ -75,7 +75,7 @@ export async function loadLensConfiguratorPage(request: Request) {
 
     const json = await res.json();
 
-    for (const v of json.data?.productByHandle?.variants?.nodes ?? []) {
+    for (const v of json.data?.productByIdentifier?.variants?.nodes ?? []) {
       lensVariantByMinor[Math.round(Number(v.price) * 100)] = v.id
         .split("/")
         .pop()!;
