@@ -30,6 +30,7 @@ export default function LensConfiguratorPage({
   data: LensConfiguratorPageData;
 }) {
   const {
+    shop,
     currencyCode,
     framePriceMinor,
     product,
@@ -341,6 +342,7 @@ export default function LensConfiguratorPage({
 
         {step === 8 && selectedLensIndex && prescriptionValues && (
           <ConfigurationReview
+            shop={shop}
             lensTypeName={selectedLensTypeName}
             lensOptionName={selectedLensOptionName}
             lensIndexName={selectedLensIndex.displayName}

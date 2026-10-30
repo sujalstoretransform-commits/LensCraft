@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { PrescriptionData } from "./PrescriptionForm";
 
 type ConfigurationReviewProps = {
+  shop: string,
   lensTypeName: string;
   lensOptionName: string;
   lensIndexName: string;
@@ -25,6 +26,7 @@ type ConfigurationReviewProps = {
 };
 
 export default function ConfigurationReview({
+  shop,
   lensTypeName,
   lensOptionName,
   lensIndexName,
@@ -69,7 +71,7 @@ export default function ConfigurationReview({
       return;
     }
 
-    const storefrontOrigin = window.location.origin;
+    // const storefrontOrigin = window.location.origin;
     const groupId = crypto.randomUUID();
 
     const rxProperties: Record<string, string> = {
@@ -107,14 +109,14 @@ export default function ConfigurationReview({
         `${lensTypeName} / ${lensIndexName}`;
     } else {
       Object.entries(rxProperties).forEach(([key, value]) => {
-        fields[`item[0][properties][${key}]`] = value;
+        fields[`items[0][properties][${key}]`] = value;
       });
     }
 
     const form = document.createElement("form");
     form.acceptCharset = "UTF-8";
     form.method = "POST";
-    form.action = `${storefrontOrigin}/cart/add`;
+    form.action = `https://${shop}/cart/add`;
 
     Object.entries(fields).forEach(([name, value]) => {
       const input = document.createElement("input");

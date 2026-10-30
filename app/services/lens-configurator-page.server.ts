@@ -1,5 +1,7 @@
-import { authenticate } from "../shopify.server";
+import { unauthenticated } from "../shopify.server";
 import { loadLensCatalog } from "./lens-catalog.server";
+
+const SHOP_REGEX = /^[a-z0-9][a-z0-9-]*\.myshopify\.com$/;
 
 const safeImageUrl = (raw: string | null): string | null => {
   if (!raw) return null;
@@ -21,14 +23,16 @@ const safeImageUrl = (raw: string | null): string | null => {
 
 export async function loadLensConfiguratorPage(request: Request) {
   const url = new URL(request.url);
-  const isAppProxy = url.searchParams.has("signature");
 
-  let admin;
-  if (isAppProxy) {
-    ({ admin } = await authenticate.public.appProxy(request));
-  } else {
-    ({ admin } = await authenticate.admin(request));
+  const shop = url.searchParams.get("shop") ?? "";
+  if (!SHOP_REGEX.test(shop)) {
+    throw new Response("Invalid shop", { status: 400 });
   }
+
+  const { admin } = await unauthenticated.admin(shop).catch((error) => {
+    console.log("No offline session for shop:", shop, error);
+    throw new Response("App is not installed on this store", { status: 404 })
+  })
 
   const requestedCurrency = url.searchParams.get("currency")?.toUpperCase();
 
@@ -38,6 +42,7 @@ export async function loadLensConfiguratorPage(request: Request) {
       : "USD";
 
   const catalog = await loadLensCatalog(currencyCode);
+
   const product = {
     productId: url.searchParams.get("productId"),
     variantId: url.searchParams.get("variantId"),
@@ -49,8 +54,7 @@ export async function loadLensConfiguratorPage(request: Request) {
     url.searchParams.get("framePrice") ?? "",
     10,
   );
-  const framePriceMinor =
-    Number.isInteger(rawFramePrice) && rawFramePrice >= 0 ? rawFramePrice : 0;
+  const framePriceMinor = Number.isInteger(rawFramePrice) && rawFramePrice >= 0 ? rawFramePrice : 0;
 
   const lensIndices = catalog.lensIndices.map((index) => ({
     ...index,
@@ -62,7 +66,7 @@ export async function loadLensConfiguratorPage(request: Request) {
   if (admin) {
     const res = await admin.graphql(`#graphql
       query {
-        productByHandle(handle: "lens-upgrade") {
+        productByIdentifier(identifier: { handle: "lens-upgrade" }) {
           variants(first: 100) {
             nodes { id price }
           }
@@ -78,9 +82,8 @@ export async function loadLensConfiguratorPage(request: Request) {
     }
   }
 
-  console.log("Lens upgrade variant prices:", lensVariantByMinor);
-
   return {
+    shop,
     currencyCode,
     framePriceMinor,
     product,

@@ -1,4 +1,3 @@
-
 {% assign selected_variant = product.selected_or_first_available_variant %}
 
 {% if product %}
@@ -8,6 +7,8 @@
     data-variant-id="{{ selected_variant.id }}"
     data-variant-title="{{ selected_variant.title | escape }}"
     data-variant-image="{% if selected_variant.featured_image %}{{ selected_variant.featured_image | image_url: width: 1200 }}{% elsif product.featured_image %}{{ product.featured_image | image_url: width: 1200 }}{% endif %}"
+    data-shop="{{ shop.permanent_domain }}"
+    data-currency="{{ cart.currency.iso_code }}"
   >
     <button
       type="button"
@@ -41,73 +42,65 @@
     }
   </style>
 
-<script>
-  (() => {
-    const block = document.currentScript
-      ?.closest(".shopify-section")
-      ?.querySelector(".lenscraft-customize");
+  <script>
+    (() => {
+      const CONFIGURATOR_URL = 'https://lens-craft-five.vercel.app/configurator';
 
-    if (!block) return;
+      const block = document.currentScript?.closest('.shopify-section')?.querySelector('.lenscraft-customize');
 
-    const button = block.querySelector("[data-lenscraft-customize]");
+      if (!block) return;
 
-    button?.addEventListener("click", async () => {
-      const productForm = document.querySelector(
-        'form[action*="/cart/add"]'
-      );
+      const button = block.querySelector('[data-lenscraft-customize]');
 
-      const variantInput = productForm?.querySelector('[name="id"]');
-      const variantId = variantInput?.value || block.dataset.variantId;
+      button?.addEventListener('click', async () => {
+        const productForm = document.querySelector('form[action*="/cart/add"]');
 
-      if (!variantId) {
-        alert("Please select a frame colour first.");
-        return;
-      }
+        const variantInput = productForm?.querySelector('[name="id"]');
+        const variantId = variantInput?.value || block.dataset.variantId;
 
-      try {
-        const handle = window.location.pathname
-          .split("/products/")[1]
-          ?.split("/")[0];
+        if (!variantId) {
+          alert('Please select a frame colour first.');
+          return;
+        }
 
-        if (!handle) throw new Error("Product handle not found.");
+        try {
+          const handle = window.location.pathname.split('/products/')[1]?.split('/')[0];
 
-        const response = await fetch(
-          `/products/${handle}.js`
-        );
+          if (!handle) throw new Error('Product handle not found.');
 
-        if (!response.ok) throw new Error("Could not load product variants.");
+          const response = await fetch(`/products/${handle}.js`);
 
-        const product = await response.json();
+          if (!response.ok) throw new Error('Could not load product variants.');
 
-        const variant = product.variants.find(
-          (item) => String(item.id) === String(variantId)
-        );
+          const product = await response.json();
 
-        if (!variant) throw new Error("Selected variant not found.");
+          const variant = product.variants.find((item) => String(item.id) === String(variantId));
 
-        const image =
-          variant.featured_image?.src ||
-          product.featured_image ||
-          block.dataset.variantImage ||
-          "";
+          if (!variant) throw new Error('Selected variant not found.');
 
-        const params = new URLSearchParams({
-          productId: String(product.id),
-          variantId: String(variant.id),
-          variantTitle: variant.public_title || variant.title,
-          image,
-          currency: "{{ cart.currency.iso_code }}",
-          framePrice: String(variant.price),
-        });
+          let image = variant.featured_image?.src || product.featured_image || block.dataset.variantImage || '';
 
-        window.location.href = `/apps/lenscraft?${params.toString()}`;
-      } catch (error) {
-        console.error("LensCraft variant lookup failed:", error);
-        alert("Unable to load the selected frame. Please try again.");
-      }
-    });
-  })();
-</script>
+          // Make protocol-relative URLs absolute
+          if (image.startsWith('//')) image = `https:${image}`;
+
+          const params = new URLSearchParams({
+            shop: block.dataset.shop,
+            productId: String(product.id),
+            variantId: String(variant.id),
+            variantTitle: variant.public_title || variant.title,
+            image,
+            currency: block.dataset.currency,
+            framePrice: String(variant.price),
+          });
+
+          window.location.href = `${CONFIGURATOR_URL}?${params.toString()}`;
+        } catch (error) {
+          console.error('LensCraft variant lookup failed:', error);
+          alert('Unable to load the selected frame. Please try again.');
+        }
+      });
+    })();
+  </script>
 {% endif %}
 
 {% schema %}
