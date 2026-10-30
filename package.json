@@ -1,6 +1,9 @@
 {
   "name": "lens-craft",
   "private": true,
+  "prisma": {
+    "seed": "tsx prisma/seeders/seed.ts"
+  },
   "scripts": {
     "build": "react-router build",
     "dev": "shopify app dev",
@@ -13,6 +16,7 @@
     "start": "react-router-serve ./build/server/index.js",
     "docker-start": "npm run setup && npm run start",
     "setup": "prisma generate && prisma migrate deploy",
+    "seed": "tsx prisma/seeders/seed.ts",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "shopify": "shopify",
     "prisma": "prisma",
@@ -61,6 +65,7 @@
     "eslint-plugin-react-hooks": "^4.6.2",
     "graphql-config": "^5.1.1",
     "prettier": "^3.6.2",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vite": "^6.3.6"
   },
