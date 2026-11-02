@@ -33,6 +33,11 @@ const lensIndices = [
     displayName: "Thin 1.61",
     refractiveIndex: "1.61",
   },
+  {
+    code: "index_159",
+    displayName: "Thin 1.59",
+    refractiveIndex: "1.59",
+  },
 ] as const;
 
 async function main() {

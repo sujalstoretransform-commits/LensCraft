@@ -93,6 +93,25 @@ const getLensOptions = (currencyCode: string) => {
                     message: true,
                 },
             },
+            lensTechnologyOptions: {
+                where: {
+                    active: true,
+                    lensTechnology: {
+                        active: true,
+                    }
+                },
+                select: {
+                    lensTechnology: {
+                        select: {
+                            id: true,
+                            code: true,
+                            name: true,
+                            description: true,
+                            sortOrder: true,
+                        },
+                    },
+                },
+            },
         },
         orderBy: {
             name: "asc",
@@ -121,6 +140,7 @@ const getLensIndexCompatibilities = () => {
     return prisma.lensIndexCompatibility.findMany({
         where: {
             active: true,
+            lensTechnologyId: null,
             lensType: { active: true },
             lensOption: { active: true },
             lensIndex: { active: true },
@@ -134,20 +154,23 @@ const getLensIndexCompatibilities = () => {
 }
 
 const getLensTechnologyIndexCompatibility = () => {
-    return prisma.lensTechnologyIndexCompatibility.findMany({
+    return prisma.lensIndexCompatibility.findMany({
         where: {
             active: true,
+            lensTechnologyId: { not: null },
+            lensType: { active: true },
+            lensOption: { active: true },
             lensTechnology: { active: true },
-            lensIndex: { active: true }
+            lensIndex: { active: true },
         },
         select: {
             lensIndex: { select: { code: true } },
-            lensTechnology: { select: { code: true } }
-        }
-    })
+            lensTechnology: { select: { code: true } },
+            lensType: { select: { code: true } },
+            lensOption: { select: { code: true } },
+        },
+    });
 }
-
-
 
 const getLensTechnologies = () => {
     return prisma.lensTechnology.findMany({
@@ -162,16 +185,34 @@ const getLensTechnologies = () => {
         },
     });
 }
+
+
 export const loadLensCatalog = async (currencyCode: string) => {
-    const [lensTypes, lensIndices, lensOptions, rules, lensIndexCompatibilities, lensTechnologies, lensTechnologyIndexCompatibility] = await Promise.all([
+    const [
+        lensTypes,
+        lensIndices,
+        lensOptions,
+        rules,
+        lensIndexCompatibilities,
+        lensTechnologies,
+        lensTechnologyIndexCompatibility,
+    ] = await Promise.all([
         getLensTypes(currencyCode),
         getLensIndices(currencyCode),
         getLensOptions(currencyCode),
         getRules(),
         getLensIndexCompatibilities(),
         getLensTechnologies(),
-        getLensTechnologyIndexCompatibility()
+        getLensTechnologyIndexCompatibility(),
     ]);
 
-    return { lensTypes, lensIndices, lensOptions, rules, lensIndexCompatibilities, lensTechnologies, lensTechnologyIndexCompatibility };
+    return {
+        lensTypes,
+        lensIndices,
+        lensOptions,
+        rules,
+        lensIndexCompatibilities,
+        lensTechnologies,
+        lensTechnologyIndexCompatibility,
+    };
 }

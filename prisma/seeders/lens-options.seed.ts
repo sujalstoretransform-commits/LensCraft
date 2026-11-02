@@ -20,14 +20,14 @@ const lensTypeOptions = [
         description: "Lenses that adapt to changing light conditions.",
     },
     {
-        code: "tinted",
-        name: "Tinted",
+        code: "sunglasses_tinted",
+        name: "Sunglasses Tinted",
         category: "lens_type" as const,
         description: "Tinted lenses for your preferred look and light conditions.",
     },
     {
-        code: "polarized",
-        name: "Polarized",
+        code: "sunglasses_polarized",
+        name: "Sunglasses Polarized",
         category: "lens_type" as const,
         description: "Designed to reduce glare from reflective surfaces.",
     },

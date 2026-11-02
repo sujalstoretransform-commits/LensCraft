@@ -66,20 +66,27 @@ export default function LensConfiguratorPage({
 
   const selectedTechnologyName = catalog.lensTechnology.find((technology) => technology.code === selectedTechnologyCode)?.name
 
+  const usesLensTechnology = [
+    "light_adaptive",
+    "sunglasses_tinted",
+    "sunglasses_polarized",
+  ].includes(selectedLensOptionCode);
+
   const compatibleIndexCodes =
-    selectedLensOptionCode === "light_adaptive" &&
-      selectedTechnologyCode
+    usesLensTechnology && selectedTechnologyCode
       ? catalog.lensTechnologyIndexCompatibility
         .filter(
           (compatibility) =>
-            compatibility.lensTechnology.code === selectedTechnologyCode
+            compatibility.lensTechnology?.code === selectedTechnologyCode &&
+            compatibility.lensType?.code === selectedVisionTypeCode &&
+            compatibility.lensOption?.code === selectedLensOptionCode
         )
         .map((compatibility) => compatibility.lensIndex.code)
       : catalog.lensIndexCompatibilities
         .filter(
           (compatibility) =>
-            compatibility.lensType.code === selectedVisionTypeCode &&
-            compatibility.lensOption.code === selectedLensOptionCode,
+            compatibility.lensType?.code === selectedVisionTypeCode &&
+            compatibility.lensOption?.code === selectedLensOptionCode,
         )
         .map((compatibility) => compatibility.lensIndex.code);
 
@@ -239,11 +246,11 @@ export default function LensConfiguratorPage({
               setSelectedLensOptionCode(lensOptionCode);
               setSelectedLensIndex(null);
 
-              const defaultIndex = lensIndices.find((index) => compatibleIndexCodes.includes(index.code) && Number(index.refractiveIndex) === 1.5)
+              const defaultIndex = lensIndices.find((index) => compatibleIndexCodes.includes(index.code) && Number(index.refractiveIndex) === 1.56)
 
               setSelectedLensIndexCode(defaultIndex?.code ?? "");
 
-              if (lensOptionCode === 'light_adaptive') {
+              if (lensOptionCode === 'light_adaptive' || lensOptionCode === 'sunglasses_tinted' || lensOptionCode === 'sunglasses_polarized') {
                 setStep(5)
               }
               else {
@@ -256,9 +263,15 @@ export default function LensConfiguratorPage({
           />
         )}
 
-        {step === 5 && selectedLensOptionCode === 'light_adaptive' && (
+        {step === 5 && ["light_adaptive", "sunglasses_tinted", "sunglasses_polarized"].includes(selectedLensOptionCode) && (
           <LensTechnologySelector
-            technologies={catalog.lensTechnology}
+            technologies={
+              catalog.lensOptions
+                .find((option) => option.code === selectedLensOptionCode)
+                ?.lensTechnologyOptions.map(
+                  (mapping) => mapping.lensTechnology
+                ) ?? []
+            }
             selectedTechnologyCode={selectedTechnologyCode}
             selectedColor={selectedTechnologyColor}
             onSelectTechnology={setSelectedTechnologyCode}
@@ -282,7 +295,7 @@ export default function LensConfiguratorPage({
             lensTypeCode={selectedVisionTypeCode}
             lensOptionCode={selectedLensOptionCode}
             onBack={() => {
-              if (selectedLensOptionCode === 'light_adaptive') {
+              if (selectedLensOptionCode === 'light_adaptive' || selectedLensOptionCode === 'sunglasses_tinted' || selectedLensOptionCode === 'sunglasses_polarized') {
                 setStep(5)
               }
               else {

@@ -5,14 +5,14 @@ import { fileURLToPath } from "node:url";
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 const seeders = [
-    "seed-lens-types.ts",
-    "seed-lens-indices.ts",
-    "seed-lens-technologies.ts",
-    "lens_options.seed.ts",
-    "seed-lens-index-compatibility.ts",
-    "seed-lens-technology-index-compatibility.ts",
-    "lens-price.seeder.ts",
+    "lens-types.seed.ts",
+    "lens-indices.seed.ts",
+    "lens-technologies.seed.ts",
+    "lens-options.seed.ts",
+    "lens-index-compatibility.seed.ts",
+    "lens-price.seed.ts",
     "lens-reading-prices.seed.ts",
+    "lens-technology-options.seed.ts",
 ];
 
 for (const file of seeders) {

@@ -37,6 +37,34 @@ const lensTechnologies = [
       "Light-adaptive lenses with blue-light protection for driving.",
     sortOrder: 5,
   },
+  {
+    code: "sunglasses_tinted",
+    name: "Sunglasses - Tinted",
+    description:
+      "Tinted sunglasses for UV protection.",
+    sortOrder: 6,
+  },
+  {
+    code: "sunglasses_tinted_blue_light",
+    name: "Sunglasses - Tinted + Blue-light filtering",
+    description:
+      "Tinted sunglasses with blue-light filtering.",
+    sortOrder: 7,
+  },
+  {
+    code: "sunglasses_solid_polarized",
+    name: "Sunglasses- Solid Polarized",
+    description:
+      "Sunglasses with solid polarized lenses.",
+    sortOrder: 8,
+  },
+  {
+    code: "sunglasses_mirror_polarized",
+    name: "Sunglasses- Mirror Polarized",
+    description:
+      "Sunglasses with mirror polarized lenses.",
+    sortOrder: 9,
+  },
 ];
 
 async function main() {
