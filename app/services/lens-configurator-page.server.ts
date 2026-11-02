@@ -24,7 +24,9 @@ const safeImageUrl = (raw: string | null): string | null => {
 export async function loadLensConfiguratorPage(request: Request) {
   const url = new URL(request.url);
 
-  const { admin } = await authenticate.public.appProxy(request);
+  const { admin } = url.searchParams.has("signature")
+    ? await authenticate.public.appProxy(request)
+    : await authenticate.admin(request);
 
   const shop = url.searchParams.get("shop") ?? "";
 
