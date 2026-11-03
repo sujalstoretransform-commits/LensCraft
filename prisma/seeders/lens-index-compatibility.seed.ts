@@ -1,139 +1,223 @@
-
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const lensTypeOptionMappings = [
+type TechnologyMapping = {
+  technologyCode: string;
+  indexes: string[];
+};
+
+type OptionMapping = {
+  lensOptionCode: string;
+  technologies: TechnologyMapping[];
+  indexes?: string[];
+};
+
+type LensTypeMapping = {
+  lensTypeCode: string;
+  options: OptionMapping[];
+};
+
+const lensCompatibilityMappings: LensTypeMapping[] = [
   {
     lensTypeCode: "single_vision_distance",
-    lensOptionCodes: [
-      "clear",
-      "blue_light",
-      "light_adaptive",
-      "sunglasses_tinted",
-      "sunglasses_polarized",
+    options: [
+      {
+        lensOptionCode: "clear",
+        technologies: [],
+        indexes: ["index_156", "index_159", "index_161", "index_167", "index_174",],
+      },
+      {
+        lensOptionCode: "blue_light",
+        technologies: [],
+        indexes: ["index_156", "index_159", "index_161", "index_167", "index_174",],
+      },
+      {
+        lensOptionCode: "light_adaptive",
+        technologies: [
+          {
+            technologyCode: "standard_light_adaptive",
+            indexes: ["index_156", "index_159", "index_161", "index_167", "index_174"],
+          },
+          {
+            technologyCode: "standard_light_adaptive_blue_light",
+            indexes: ["index_156", "index_159", "index_161", "index_167", "index_174"],
+          },
+          {
+            technologyCode: "transitions_gen_s",
+            indexes: ["index_150", "index_159", "index_161", "index_167", "index_174"],
+          },
+          {
+            technologyCode: "transitions_xtractive",
+            indexes: ["index_150", "index_161", "index_167"],
+          },
+          {
+            technologyCode: "in_car_light_adaptive_blue_light",
+            indexes: ["index_161", "index_167"],
+          },
+        ],
+      },
+      {
+        lensOptionCode: "sunglasses_tinted",
+        technologies: [
+          {
+            technologyCode: "sunglasses_tinted",
+            indexes: ["index_161", "index_167"],
+          },
+          {
+            technologyCode: "sunglasses_tinted_blue_light",
+            indexes: ["index_161", "index_167"],
+          },
+        ],
+      },
+      {
+        lensOptionCode: "sunglasses_polarized",
+        technologies: [
+          {
+            technologyCode: "sunglasses_solid_polarized",
+            indexes: ["index_156", "index_159", "index_161", "index_167"],
+          },
+          {
+            technologyCode: "sunglasses_mirror_polarized",
+            indexes: ["index_156", "index_161", "index_167"],
+          },
+        ],
+      },
     ],
   },
+
   {
     lensTypeCode: "single_vision_reading",
-    lensOptionCodes: [
-      "clear",
-      "blue_light",
-      "light_adaptive",
-      "sunglasses_tinted",
-      "sunglasses_polarized",
+    options: [
+      {
+        lensOptionCode: "clear",
+        technologies: [],
+        indexes: ["index_156", "index_159", "index_161", "index_167", "index_174",],
+      },
+      {
+        lensOptionCode: "blue_light",
+        technologies: [],
+        indexes: ["index_156", "index_159", "index_161", "index_167", "index_174",],
+      },
+      {
+        lensOptionCode: "light_adaptive",
+        technologies: [
+          {
+            technologyCode: "standard_light_adaptive",
+            indexes: ["index_156", "index_159", "index_161", "index_167", "index_174"],
+          },
+          {
+            technologyCode: "standard_light_adaptive_blue_light",
+            indexes: ["index_156", "index_159", "index_161", "index_167", "index_174"],
+          },
+          {
+            technologyCode: "transitions_gen_s",
+            indexes: ["index_150", "index_159", "index_161", "index_167", "index_174"],
+          },
+          {
+            technologyCode: "transitions_xtractive",
+            indexes: ["index_150", "index_161", "index_167"],
+          },
+          {
+            technologyCode: "in_car_light_adaptive_blue_light",
+            indexes: ["index_161", "index_167"],
+          },
+        ],
+      },
+      {
+        lensOptionCode: "sunglasses_tinted",
+        technologies: [
+          {
+            technologyCode: "sunglasses_tinted",
+            indexes: ["index_161", "index_167"],
+          },
+          {
+            technologyCode: "sunglasses_tinted_blue_light",
+            indexes: ["index_161", "index_167"],
+          },
+        ],
+      },
+      {
+        lensOptionCode: "sunglasses_polarized",
+        technologies: [
+          {
+            technologyCode: "sunglasses_solid_polarized",
+            indexes: ["index_156", "index_159", "index_161", "index_167"],
+          },
+          {
+            technologyCode: "sunglasses_mirror_polarized",
+            indexes: ["index_156", "index_161", "index_167"],
+          },
+        ],
+      },
     ],
   },
+
   {
     lensTypeCode: "progressive",
-    lensOptionCodes: [
-      "clear",
-      "blue_light",
-      "light_adaptive",
-      "sunglasses_tinted",
-      "sunglasses_polarized",
+    options: [
+      {
+        lensOptionCode: "clear",
+        technologies: [],
+        indexes: ["index_156", "index_159", "index_161", "index_167", "index_174",],
+      },
+      {
+        lensOptionCode: "blue_light",
+        technologies: [],
+        indexes: ["index_156", "index_159", "index_161", "index_167", "index_174",],
+      },
+      {
+        lensOptionCode: "light_adaptive",
+        technologies: [
+          {
+            technologyCode: "standard_light_adaptive",
+            indexes: ["index_156", "index_159", "index_161", "index_167", "index_174"],
+          },
+          {
+            technologyCode: "standard_light_adaptive_blue_light",
+            indexes: ["index_156", "index_161", "index_167", "index_174"],
+          },
+          {
+            technologyCode: "transitions_gen_s",
+            indexes: ["index_150", "index_159", "index_161", "index_167", "index_174"],
+          },
+          {
+            technologyCode: "transitions_xtractive",
+            indexes: ["index_150", "index_161", "index_167"],
+          },
+        ],
+      },
+      {
+        lensOptionCode: "sunglasses_tinted",
+        technologies: [
+          {
+            technologyCode: "sunglasses_tinted",
+            indexes: ["index_156", "index_161", "index_167"],
+          },
+          {
+            technologyCode: "sunglasses_tinted_blue_light",
+            indexes: ["index_156", "index_161", "index_167"],
+          },
+        ],
+      },
+      {
+        lensOptionCode: "sunglasses_polarized",
+        technologies: [
+          {
+            technologyCode: "sunglasses_solid_polarized",
+            indexes: ["index_156", "index_159", "index_161", "index_167"],
+          },
+          {
+            technologyCode: "sunglasses_mirror_polarized",
+            indexes: ["index_156", "index_161", "index_167"],
+          },
+        ],
+      },
     ],
   },
 ];
 
-const technologyCodesByLensTypeAndOption: Record<
-  string,
-  Record<string, string[]>
-> = {
-  single_vision_distance: {
-    light_adaptive: [
-      "standard_light_adaptive",
-      "standard_light_adaptive_blue_light",
-      "transitions_gen_s",
-      "transitions_xtractive",
-      "in_car_light_adaptive_blue_light",
-    ],
-  },
-  single_vision_reading: {
-    light_adaptive: [
-      "standard_light_adaptive",
-      "standard_light_adaptive_blue_light",
-      "transitions_gen_s",
-      "transitions_xtractive",
-      "in_car_light_adaptive_blue_light",
-    ],
-  },
-  progressive: {
-    light_adaptive: [
-      "standard_light_adaptive",
-      "standard_light_adaptive_blue_light",
-      "transitions_gen_s",
-      "transitions_xtractive",
-    ],
-  },
-};
-
-const technologyCodesByOption: Record<string, string[]> = {
-  sunglasses_tinted: [
-    "sunglasses_tinted",
-    "sunglasses_tinted_blue_light",
-  ],
-  sunglasses_polarized: [
-    "sunglasses_solid_polarized",
-    "sunglasses_mirror_polarized",
-  ],
-};
-
-const standardIndexCodes = [
-  "index_156",
-  "index_159",
-  "index_161",
-  "index_167",
-  "index_174",
-];
-
-const technologyIndexMappings: Record<string, string[]> = {
-  standard_light_adaptive: [
-    "index_156",
-    "index_159",
-    "index_161",
-    "index_167",
-    "index_174",
-  ],
-  standard_light_adaptive_blue_light: [
-    "index_156",
-    "index_159",
-    "index_161",
-    "index_167",
-    "index_174",
-  ],
-  transitions_gen_s: [
-    "index_150",
-    "index_159",
-    "index_161",
-    "index_167",
-    "index_174",
-  ],
-  transitions_xtractive: [
-    "index_150",
-    "index_161",
-    "index_167",
-  ],
-  in_car_light_adaptive_blue_light: [
-    "index_161",
-    "index_167",
-  ],
-  sunglasses_tinted: ["index_161", "index_167"],
-  sunglasses_tinted_blue_light: ["index_161", "index_167"],
-  sunglasses_solid_polarized: [
-    "index_156",
-    "index_159",
-    "index_161",
-    "index_167",
-  ],
-  sunglasses_mirror_polarized: [
-    "index_156",
-    "index_161",
-    "index_167",
-  ],
-};
-
-async function main() {
+async function seedLensCompatibility() {
   const [lensTypes, lensOptions, lensTechnologies, lensIndices] =
     await Promise.all([
       prisma.lensType.findMany({
@@ -141,7 +225,6 @@ async function main() {
         select: { id: true, code: true },
       }),
       prisma.lensOption.findMany({
-        where: { active: true },
         select: { id: true, code: true },
       }),
       prisma.lensTechnology.findMany({
@@ -154,18 +237,10 @@ async function main() {
       }),
     ]);
 
-  const lensTypeByCode = new Map(
-    lensTypes.map((item) => [item.code, item]),
-  );
-  const lensOptionByCode = new Map(
-    lensOptions.map((item) => [item.code, item]),
-  );
-  const technologyByCode = new Map(
-    lensTechnologies.map((item) => [item.code, item]),
-  );
-  const lensIndexByCode = new Map(
-    lensIndices.map((item) => [item.code, item]),
-  );
+  const lensTypeByCode = new Map(lensTypes.map((x) => [x.code, x]));
+  const lensOptionByCode = new Map(lensOptions.map((x) => [x.code, x]));
+  const technologyByCode = new Map(lensTechnologies.map((x) => [x.code, x]));
+  const indexByCode = new Map(lensIndices.map((x) => [x.code, x]));
 
   const compatibilityRows: {
     lensTypeId: string;
@@ -182,119 +257,120 @@ async function main() {
     active: boolean;
   }[] = [];
 
-  for (const mapping of lensTypeOptionMappings) {
-    const lensType = lensTypeByCode.get(mapping.lensTypeCode);
+  const compatibilityKeys = new Set<string>();
+  const technologyOptionKeys = new Set<string>();
+
+  for (const typeMapping of lensCompatibilityMappings) {
+    const lensType = lensTypeByCode.get(typeMapping.lensTypeCode);
 
     if (!lensType) {
-      throw new Error(
-        `Active LensType "${mapping.lensTypeCode}" was not found.`,
-      );
+      throw new Error(`Lens type not found or inactive: ${typeMapping.lensTypeCode}`);
     }
 
-    for (const optionCode of mapping.lensOptionCodes) {
-      const lensOption = lensOptionByCode.get(optionCode);
+    for (const optionMapping of typeMapping.options) {
+      const lensOption = lensOptionByCode.get(optionMapping.lensOptionCode);
 
       if (!lensOption) {
-        throw new Error(
-          `Active LensOption "${optionCode}" was not found.`,
-        );
+        throw new Error(`Lens option not found: ${optionMapping.lensOptionCode}`);
       }
 
-      const technologyCodes =
-        technologyCodesByLensTypeAndOption[mapping.lensTypeCode]?.[
-        optionCode
-        ] ?? technologyCodesByOption[optionCode];
-
-      // Options without technologies use the standard index list.
-      if (!technologyCodes) {
-        for (const indexCode of standardIndexCodes) {
-          const lensIndex = lensIndexByCode.get(indexCode);
+      if (optionMapping.technologies.length === 0) {
+        for (const indexCode of optionMapping.indexes ?? []) {
+          const lensIndex = indexByCode.get(indexCode);
 
           if (!lensIndex) {
-            throw new Error(
-              `Active LensIndex "${indexCode}" was not found.`,
-            );
+            throw new Error(`Active lens index not found: ${indexCode}`);
           }
 
-          compatibilityRows.push({
-            lensTypeId: lensType.id,
-            lensOptionId: lensOption.id,
-            lensTechnologyId: null,
-            lensIndexId: lensIndex.id,
-            active: true,
-          });
+          const key = `${lensType.id}:${lensOption.id}:NULL:${lensIndex.id}`;
+
+          if (!compatibilityKeys.has(key)) {
+            compatibilityKeys.add(key);
+            compatibilityRows.push({
+              lensTypeId: lensType.id,
+              lensOptionId: lensOption.id,
+              lensTechnologyId: null,
+              lensIndexId: lensIndex.id,
+              active: true,
+            });
+          }
         }
 
         continue;
       }
 
-      for (const technologyCode of technologyCodes) {
-        const technology = technologyByCode.get(technologyCode);
+      for (const technologyMapping of optionMapping.technologies) {
+        const technology = technologyByCode.get(technologyMapping.technologyCode);
 
         if (!technology) {
           throw new Error(
-            `Active LensTechnology "${technologyCode}" was not found.`,
+            `Active lens technology not found: ${technologyMapping.technologyCode}`,
           );
         }
 
-        const indexCodes = technologyIndexMappings[technologyCode];
+        const technologyOptionKey =
+          `${lensType.id}:${lensOption.id}:${technology.id}`;
 
-        if (!indexCodes?.length) {
-          throw new Error(
-            `No index mapping configured for technology "${technologyCode}".`,
-          );
-        }
-
-        technologyOptionRows.push({
-          lensTypeId: lensType.id,
-          lensOptionId: lensOption.id,
-          lensTechnologyId: technology.id,
-          active: true,
-        });
-
-        for (const indexCode of indexCodes) {
-          const lensIndex = lensIndexByCode.get(indexCode);
-
-          if (!lensIndex) {
-            throw new Error(
-              `Active LensIndex "${indexCode}" was not found.`,
-            );
-          }
-
-          compatibilityRows.push({
+        if (!technologyOptionKeys.has(technologyOptionKey)) {
+          technologyOptionKeys.add(technologyOptionKey);
+          technologyOptionRows.push({
             lensTypeId: lensType.id,
             lensOptionId: lensOption.id,
             lensTechnologyId: technology.id,
-            lensIndexId: lensIndex.id,
             active: true,
           });
+        }
+
+        for (const indexCode of technologyMapping.indexes) {
+          const lensIndex = indexByCode.get(indexCode);
+
+          if (!lensIndex) {
+            throw new Error(`Active lens index not found: ${indexCode}`);
+          }
+
+          const key =
+            `${lensType.id}:${lensOption.id}:${technology.id}:${lensIndex.id}`;
+
+          if (!compatibilityKeys.has(key)) {
+            compatibilityKeys.add(key);
+            compatibilityRows.push({
+              lensTypeId: lensType.id,
+              lensOptionId: lensOption.id,
+              lensTechnologyId: technology.id,
+              lensIndexId: lensIndex.id,
+              active: true,
+            });
+          }
         }
       }
     }
   }
 
-  await prisma.$transaction([
-    prisma.lensIndexCompatibility.deleteMany(),
-    prisma.lensTechnologyOption.deleteMany(),
-    prisma.lensTechnologyOption.createMany({
-      data: technologyOptionRows,
-    }),
-    prisma.lensIndexCompatibility.createMany({
-      data: compatibilityRows,
-    }),
-  ]);
+  await prisma.$transaction(async (tx) => {
+    await tx.lensIndexCompatibility.deleteMany();
+    await tx.lensTechnologyOption.deleteMany();
 
-  console.log(
-    `Technology-option mappings created: ${technologyOptionRows.length}`,
-  );
-  console.log(
-    `Lens-index compatibility records created: ${compatibilityRows.length}`,
-  );
+    if (technologyOptionRows.length) {
+      await tx.lensTechnologyOption.createMany({
+        data: technologyOptionRows,
+      });
+    }
+
+    if (compatibilityRows.length) {
+      await tx.lensIndexCompatibility.createMany({
+        data: compatibilityRows,
+      });
+    }
+  });
+
+  console.log("Lens compatibility seeding completed.");
+  console.log(`Technology options: ${technologyOptionRows.length}`);
+  console.log(`Index compatibilities: ${compatibilityRows.length}`);
 }
 
-main()
+seedLensCompatibility()
   .catch((error) => {
-    console.error("Failed to seed lens compatibilities:", error);
+    console.error("Lens compatibility seeding failed:", error);
     process.exitCode = 1;
   })
   .finally(async () => {

@@ -2,46 +2,78 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const lensTypeCodes = [
-  "single_vision_distance",
-  "single_vision_reading",
-  "progressive",
-];
-
-const technologyOptionMappings = [
-  {
-    optionCode: "light_adaptive",
-    technologyCodes: [
+const technologyOptionMappings = {
+  single_vision_distance: {
+    light_adaptive: [
       "standard_light_adaptive",
       "standard_light_adaptive_blue_light",
       "transitions_gen_s",
       "transitions_xtractive",
       "in_car_light_adaptive_blue_light",
     ],
-  },
-  {
-    optionCode: "sunglasses_tinted",
-    technologyCodes: [
+
+    sunglasses_tinted: [
       "sunglasses_tinted",
       "sunglasses_tinted_blue_light",
     ],
-  },
-  {
-    optionCode: "sunglasses_polarized",
-    technologyCodes: [
+
+    sunglasses_polarized: [
       "sunglasses_solid_polarized",
       "sunglasses_mirror_polarized",
     ],
   },
-];
+
+  single_vision_reading: {
+    light_adaptive: [
+      "standard_light_adaptive",
+      "standard_light_adaptive_blue_light",
+      "transitions_gen_s",
+      "transitions_xtractive",
+      "in_car_light_adaptive_blue_light",
+    ],
+
+    sunglasses_tinted: [
+      "sunglasses_tinted",
+      "sunglasses_tinted_blue_light",
+    ],
+
+    sunglasses_polarized: [
+      "sunglasses_solid_polarized",
+      "sunglasses_mirror_polarized",
+    ],
+  },
+
+  progressive: {
+    light_adaptive: [
+      "standard_light_adaptive",
+      "standard_light_adaptive_blue_light",
+      "transitions_gen_s",
+      "transitions_xtractive",
+    ],
+
+    sunglasses_tinted: [
+      "sunglasses_tinted",
+      "sunglasses_tinted_blue_light",
+    ],
+
+    sunglasses_polarized: [
+      "sunglasses_solid_polarized",
+      "sunglasses_mirror_polarized",
+    ],
+  },
+} as const;
 
 async function main() {
   console.log("Seeding lens technology-option mappings...");
 
-  // Resolve the lens types once.
+  // Resolve all configured lens types.
+  const lensTypeCodes = Object.keys(technologyOptionMappings);
+
   const lensTypes = await prisma.lensType.findMany({
     where: {
-      code: { in: lensTypeCodes },
+      code: {
+        in: lensTypeCodes,
+      },
     },
     select: {
       id: true,
@@ -59,28 +91,87 @@ async function main() {
     }
   }
 
-  for (const mapping of technologyOptionMappings) {
-    const lensOption = await prisma.lensOption.findUnique({
-      where: { code: mapping.optionCode },
-      select: { id: true, code: true },
-    });
+  // Process every lens type -> lens option -> technology combination.
+  for (const [lensTypeCode, optionMappings] of Object.entries(
+    technologyOptionMappings,
+  )) {
+    const lensType = lensTypeByCode.get(lensTypeCode);
 
-    if (!lensOption) {
-      throw new Error(`LensOption not found: ${mapping.optionCode}`);
+    if (!lensType) {
+      throw new Error(`LensType not found: ${lensTypeCode}`);
     }
 
-    for (const technologyCode of mapping.technologyCodes) {
-      const technology = await prisma.lensTechnology.findUnique({
-        where: { code: technologyCode },
-        select: { id: true, code: true },
+    for (const [optionCode, technologyCodes] of Object.entries(
+      optionMappings,
+    )) {
+      const lensOption = await prisma.lensOption.findUnique({
+        where: {
+          code: optionCode,
+        },
+        select: {
+          id: true,
+          code: true,
+        },
       });
 
-      if (!technology) {
-        throw new Error(`LensTechnology not found: ${technologyCode}`);
+      if (!lensOption) {
+        throw new Error(`LensOption not found: ${optionCode}`);
       }
 
-      for (const lensTypeCode of lensTypeCodes) {
-        const lensType = lensTypeByCode.get(lensTypeCode)!;
+      // Fetch the technologies required by this configuration.
+      const technologies = await prisma.lensTechnology.findMany({
+        where: {
+          code: {
+            in: [...technologyCodes],
+          },
+        },
+        select: {
+          id: true,
+          code: true,
+        },
+      });
+
+      const technologyByCode = new Map(
+        technologies.map((technology) => [
+          technology.code,
+          technology,
+        ]),
+      );
+
+      // Validate all configured technologies before writing mappings.
+      for (const technologyCode of technologyCodes) {
+        if (!technologyByCode.has(technologyCode)) {
+          throw new Error(
+            `LensTechnology not found: ${technologyCode}`,
+          );
+        }
+      }
+
+      // Deactivate mappings that are no longer configured.
+      await prisma.lensTechnologyOption.updateMany({
+        where: {
+          lensTypeId: lensType.id,
+          lensOptionId: lensOption.id,
+          lensTechnology: {
+            code: {
+              notIn: [...technologyCodes],
+            },
+          },
+        },
+        data: {
+          active: false,
+        },
+      });
+
+      // Create or reactivate the configured mappings.
+      for (const technologyCode of technologyCodes) {
+        const technology = technologyByCode.get(technologyCode);
+
+        if (!technology) {
+          throw new Error(
+            `LensTechnology not found: ${technologyCode}`,
+          );
+        }
 
         await prisma.lensTechnologyOption.upsert({
           where: {
@@ -103,26 +194,34 @@ async function main() {
       }
 
       console.log(
-        `Mapped ${technology.code} to ${lensOption.code} for all three lens types.`,
+        `Mapped ${lensTypeCode} -> ${optionCode}: ${technologyCodes.length} technologies`,
       );
     }
   }
 
-  const count = await prisma.lensTechnologyOption.count({
+  const activeMappingCount = await prisma.lensTechnologyOption.count({
     where: {
       active: true,
       lensType: {
-        code: { in: lensTypeCodes },
+        code: {
+          in: lensTypeCodes,
+        },
       },
     },
   });
 
-  console.log(`Seeding completed. Active mappings for these lens types: ${count}`);
+  console.log(
+    `Seeding completed. Active mappings for configured lens types: ${activeMappingCount}`,
+  );
 }
 
 main()
   .catch((error) => {
-    console.error("Lens technology-option seeding failed:", error);
+    console.error(
+      "Lens technology-option seeding failed:",
+      error,
+    );
+
     process.exitCode = 1;
   })
   .finally(async () => {
