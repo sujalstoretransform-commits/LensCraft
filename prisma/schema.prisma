@@ -63,23 +63,6 @@ enum LensOptionCategory {
   add_on
 }
 
-model LensOption {
-  id                       String                   @id @default(cuid())
-  code                     String                   @unique
-  name                     String
-  category                 LensOptionCategory
-  description              String?
-  active                   Boolean                  @default(true)
-  prices                   LensPrice[]
-  rules                    LensCompatibilityRule[]
-  createdAt                DateTime                 @default(now())
-  updatedAt                DateTime                 @updatedAt
-  lensIndexCompatibilities LensIndexCompatibility[]
-  lensTechnologyOptions    LensTechnologyOption[]
-
-  @@index([category, active])
-}
-
 model LensConfiguration {
   id                 String   @id @default(cuid())
   shop               String
@@ -96,18 +79,19 @@ model LensConfiguration {
 }
 
 model LensType {
-  id                   String                   @id @default(cuid())
-  code                 String                   @unique
-  name                 String
-  family               LensFamily
-  description          String?
-  active               Boolean                  @default(true)
-  prices               LensPrice[]
-  rules                LensCompatibilityRule[]
-  supplierMappings     SupplierLensMapping[]
-  indexCompatibilities LensIndexCompatibility[] @relation("LensTypeIndexCompatibilities")
-  createdAt            DateTime                 @default(now())
-  updatedAt            DateTime                 @updatedAt
+  id                    String                   @id @default(cuid())
+  code                  String                   @unique
+  name                  String
+  family                LensFamily
+  description           String?
+  active                Boolean                  @default(true)
+  prices                LensPrice[]
+  rules                 LensCompatibilityRule[]
+  supplierMappings      SupplierLensMapping[]
+  indexCompatibilities  LensIndexCompatibility[] @relation("LensTypeIndexCompatibilities")
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+  lensTechnologyOptions LensTechnologyOption[]
 
   @@index([family, active])
 }
@@ -140,9 +124,13 @@ model LensPrice {
   lensIndex    LensIndex?    @relation(fields: [lensIndexId], references: [id], onDelete: Cascade)
   lensOptionId String?
   lensOption   LensOption?   @relation(fields: [lensOptionId], references: [id], onDelete: Cascade)
-  active       Boolean       @default(true)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+
+  lensTechnologyId String?
+  lensTechnology   LensTechnology? @relation(fields: [lensTechnologyId], references: [id], onDelete: Cascade)
+
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([active, kind])
   @@index([lensTypeId, lensIndexId, currencyCode, active])
@@ -188,21 +176,6 @@ model SupplierLensMapping {
   @@index([lensTypeId, lensIndexId, active])
 }
 
-model LensTechnology {
-  id                       String                   @id @default(cuid())
-  code                     String                   @unique
-  name                     String
-  description              String?
-  active                   Boolean                  @default(true)
-  sortOrder                Int                      @default(0)
-  createdAt                DateTime                 @default(now())
-  updatedAt                DateTime                 @updatedAt
-  lensTechnologyOptions    LensTechnologyOption[]
-  lensIndexCompatibilities LensIndexCompatibility[]
-
-  @@index([active, sortOrder])
-}
-
 model LensIndexCompatibility {
   id     String  @id @default(cuid())
   active Boolean @default(true)
@@ -232,9 +205,45 @@ enum LensTechnologyColor {
   AMBER
 }
 
+model LensOption {
+  id                       String                   @id @default(cuid())
+  code                     String                   @unique
+  name                     String
+  category                 LensOptionCategory
+  description              String?
+  active                   Boolean                  @default(true)
+  prices                   LensPrice[]
+  rules                    LensCompatibilityRule[]
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+  lensIndexCompatibilities LensIndexCompatibility[]
+  lensTechnologyOptions    LensTechnologyOption[]
+
+  @@index([category, active])
+}
+
+model LensTechnology {
+  id                       String                   @id @default(cuid())
+  code                     String                   @unique
+  name                     String
+  description              String?
+  active                   Boolean                  @default(true)
+  sortOrder                Int                      @default(0)
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+  lensTechnologyOptions    LensTechnologyOption[]
+  lensIndexCompatibilities LensIndexCompatibility[]
+  lensPrices               LensPrice[]
+
+  @@index([active, sortOrder])
+}
+
 model LensTechnologyOption {
   id     String  @id @default(cuid())
   active Boolean @default(true)
+
+  lensType   LensType @relation(fields: [lensTypeId], references: [id], onDelete: Cascade)
+  lensTypeId String
 
   lensOption   LensOption @relation(fields: [lensOptionId], references: [id], onDelete: Cascade)
   lensOptionId String
@@ -242,7 +251,7 @@ model LensTechnologyOption {
   lensTechnology   LensTechnology @relation(fields: [lensTechnologyId], references: [id], onDelete: Cascade)
   lensTechnologyId String
 
-  @@unique([lensOptionId, lensTechnologyId])
-  @@index([lensOptionId, active])
+  @@unique([lensTypeId, lensOptionId, lensTechnologyId])
+  @@index([lensTypeId, lensOptionId, active])
   @@index([lensTechnologyId, active])
 }

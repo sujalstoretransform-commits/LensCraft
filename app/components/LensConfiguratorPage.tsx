@@ -10,7 +10,7 @@ import ConfigurationReview from "./ConfigurationReview";
 import { validatePrescription, type Prescription, } from "app/services/prescription";
 import { calculatePrice, PriceError } from "app/services/lens-pricing";
 import PrescriptionSelection, { PrescriptionMethod } from "./PrescriptionSelection";
-import CoatingReview, { CoatingSelection } from "./CoatingReview";
+import CoatingReview, { type CoatingSelection } from "./CoatingReview";
 import LensTechnologySelector, { type LensTechnologyColor, } from "./LensTechnologySelector";
 
 type PriceResult = {
@@ -41,6 +41,7 @@ export default function LensConfiguratorPage({
 
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8>(1);
   const [prescriptionValues, setPrescriptionValues] = useState<PrescriptionData | undefined>();
+  const [prescriptionImage, setPrescriptionImage] = useState<File | null>(null);
   const [prescriptionErrors, setPrescriptionErrors] = useState<string[]>([]);
   const [selectedVisionTypeCode, setSelectedVisionTypeCode] = useState("single_vision_distance",);
   const [selectedLensIndexCode, setSelectedLensIndexCode] = useState("");
@@ -54,10 +55,7 @@ export default function LensConfiguratorPage({
   const [priceError, setPriceError] = useState("");
   const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
   const [prescriptionMethod, setPrescriptionMethod] = useState<PrescriptionMethod | null>(null);
-  const [coatingSelection, setCoatingSelection] = useState<CoatingSelection>({
-    antiFog: false,
-    blueLight: false,
-  });
+  const [coatingSelection, setCoatingSelection] = useState<CoatingSelection>([]);
 
   const [selectedCoatings, setSelectedCoatings] = useState<string[]>([]);
 
@@ -90,9 +88,9 @@ export default function LensConfiguratorPage({
         )
         .map((compatibility) => compatibility.lensIndex.code);
 
-  const handlePrescriptionContinue = (values: PrescriptionData) => {
-    const toNumber = (value: string) =>
-      value.trim() === "" ? undefined : Number(value);
+  const handlePrescriptionContinue = (values: PrescriptionData, image?: File) => {
+    const toNumber = (value: string) => value.trim() === "" ? undefined : Number(value);
+
     const prescription: Prescription = {
       right: {
         sph: toNumber(values.rightSph),
@@ -113,9 +111,15 @@ export default function LensConfiguratorPage({
       return;
     }
 
-    setStep(4);
+    if (selectedVisionTypeCode === "progressive" && !image) {
+      setPrescriptionErrors(["Prescription image is required for progressive lenses."]);
+      return;
+    }
+
     setPrescriptionValues(values);
+    setPrescriptionImage(image ?? null);
     setPrescriptionErrors([]);
+    setStep(4);
   };
 
   const selectedLensTypeName =
@@ -140,6 +144,7 @@ export default function LensConfiguratorPage({
           lensTypeCode: selectedVisionTypeCode,
           lensIndexCode,
           optionCodes,
+          lensTechnologyCode: selectedTechnologyCode || undefined,
         },
         framePriceMinor,
       );
@@ -194,7 +199,7 @@ export default function LensConfiguratorPage({
             selectedLensTypeCode={selectedVisionTypeCode}
             lensTypes={lensTypesWithPrices}
             onSelectLensType={(lensType) => {
-              if (lensType !== "single_vision_distance" && lensType !== "single_vision_reading") return;
+              if (lensType !== "single_vision_distance" && lensType !== "single_vision_reading" && lensType !== "progressive") return;
               setSelectedVisionTypeCode(lensType);
               setSelectedLensIndex(null);
               setSelectedLensIndexCode("")
@@ -233,6 +238,7 @@ export default function LensConfiguratorPage({
               setStep(2);
             }}
             onContinue={handlePrescriptionContinue}
+            requirePrescriptionImage={selectedVisionTypeCode === "progressive"}
           />
         )}
 
@@ -268,7 +274,12 @@ export default function LensConfiguratorPage({
             technologies={
               catalog.lensOptions
                 .find((option) => option.code === selectedLensOptionCode)
-                ?.lensTechnologyOptions.map(
+                ?.lensTechnologyOptions
+                .filter(
+                  (mapping) =>
+                    mapping.lensType.code === selectedVisionTypeCode,
+                )
+                .map(
                   (mapping) => mapping.lensTechnology
                 ) ?? []
             }
@@ -314,6 +325,9 @@ export default function LensConfiguratorPage({
 
         {step === 7 && selectedLensIndex && (
           <CoatingReview
+            lensOptions={catalog.lensOptions.filter(
+              (option): option is typeof option & { category: "add_on" } => option.category === "add_on",
+            )}
             lensOptionCode={selectedLensOptionCode}
             initialSelection={coatingSelection}
             selectedTechnologyCode={selectedTechnologyCode}
@@ -321,28 +335,17 @@ export default function LensConfiguratorPage({
             onContinue={(selection) => {
               setCoatingSelection(selection)
 
-              const selected: string[] = [];
+              const optionCodes = [selectedLensOptionCode, ...selection];
 
-              if (selection.antiFog) {
-                selected.push("Anti-fog")
-              }
+              const coatingNames = catalog.lensOptions
+                .filter(
+                  (option) =>
+                    option.category === 'add_on' &&
+                    selection.includes(option.code)
+                )
+                .map((option) => option.name)
 
-              if (selection.blueLight) {
-                selected.push("Blue-light coating")
-              }
-
-              setSelectedCoatings(selected)
-
-              const optionCodes = [selectedLensOptionCode];
-
-              if (selection.antiFog) {
-                optionCodes.push("anti_fog");
-              }
-
-              if (selection.blueLight) {
-                optionCodes.push("blue_light_coating");
-              }
-
+              setSelectedCoatings(coatingNames)
 
               calculateSelectedPrice(
                 selectedLensIndex.code,
@@ -374,6 +377,7 @@ export default function LensConfiguratorPage({
             selectedCoatings={selectedCoatings}
             selectedTechnologyName={selectedTechnologyName ?? ""}
             selectedTechnologyColor={selectedTechnologyColor}
+            prescriptionImage={prescriptionImage}
           />
         )}
       </div>

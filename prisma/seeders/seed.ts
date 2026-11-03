@@ -11,7 +11,6 @@ const seeders = [
     "lens-options.seed.ts",
     "lens-index-compatibility.seed.ts",
     "lens-price.seed.ts",
-    "lens-reading-prices.seed.ts",
     "lens-technology-options.seed.ts",
 ];
 

@@ -100,16 +100,6 @@ export default function LensTypeSelector({
                                     }).format(lens.startingPrice / 100)}`
                                     : "Price unavailable"}
                             </span>
-
-
-
-                            <span
-                                className={`mt-auto pt-4 text-lg ${isSelected ? "text-blue-500" : "text-slate-500"
-                                    }`}
-                                aria-hidden="true"
-                            >
-                                →
-                            </span>
                         </button>
                     );
                 })}

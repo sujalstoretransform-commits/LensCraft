@@ -4,9 +4,10 @@ type PrescriptionFormProps = {
     lensIndexName: string;
     refractiveIndex: number | null;
     onBack: () => void;
-    onContinue: (prescription: PrescriptionData) => void;
+    onContinue: (prescription: PrescriptionData, prescriptionImage?: File) => void;
     initialValues?: PrescriptionData;
     errors?: string[];
+    requirePrescriptionImage?: boolean;
 };
 
 export type PrescriptionData = {
@@ -27,7 +28,8 @@ export default function PrescriptionForm(
         onBack,
         onContinue,
         initialValues,
-        errors
+        errors,
+        requirePrescriptionImage = false,
     }: PrescriptionFormProps
 ) {
     const [prescription, setPrescription] = useState<PrescriptionData>(
@@ -42,6 +44,10 @@ export default function PrescriptionForm(
         },
     );
 
+    const [prescriptionImage, setPrescriptionImage] = useState<File | null>(null);
+
+    const [imageError, setImageError] = useState("");
+
     const updateField = (field: keyof PrescriptionData, value: string) => {
         setPrescription((current) => ({
             ...current,
@@ -51,6 +57,15 @@ export default function PrescriptionForm(
 
     const inputClass =
         "w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
+
+    const handleContinue = () => {
+        if (requirePrescriptionImage && !prescriptionImage) {
+            setImageError("Prescription image is required.");
+            return;
+        }
+
+        onContinue(prescription, prescriptionImage ?? undefined);
+    };
 
     return (
         <section className="w-full bg-white px-5 py-8 md:px-12">
@@ -185,8 +200,49 @@ export default function PrescriptionForm(
                         onChange={(event) => updateField("pd", event.target.value)}
                         placeholder="e.g. 63"
                     />
-
                 </div>
+
+                {requirePrescriptionImage && (
+                    <div className="mt-6 max-w-xl">
+                        <label
+                            htmlFor="prescription-image"
+                            className="mb-2 block text-sm font-semibold text-slate-900"
+                        >
+                            Prescription Image
+                            <span className="ml-1 text-red-600">*</span>
+                        </label>
+
+                        <p className="mb-3 text-sm text-slate-600">
+                            Must send a picture of prescription.
+                            Upload a clear image of your prescription.
+                        </p>
+
+                        <input
+                            id="prescription-image"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            required
+                            onChange={(event) => {
+                                const file = event.target.files?.[0] ?? null;
+                                setPrescriptionImage(file);
+                                setImageError("");
+                            }}
+                            className={inputClass}
+                        />
+
+                        {prescriptionImage && (
+                            <p className="mt-2 text-sm text-slate-700">
+                                Selected file: {prescriptionImage.name}
+                            </p>
+                        )}
+
+                        {imageError && (
+                            <p className="mt-2 text-sm text-red-600">
+                                {imageError}
+                            </p>
+                        )}
+                    </div>
+                )}
 
                 {errors && errors.length > 0 && (
                     <div className="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700">
@@ -208,7 +264,7 @@ export default function PrescriptionForm(
                     </button>
                     <button
                         type="button"
-                        onClick={() => onContinue(prescription)}
+                        onClick={handleContinue}
                         className="rounded-lg bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-700"
                     >
                         Continue

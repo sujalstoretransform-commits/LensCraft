@@ -1,11 +1,14 @@
-import { useState } from "react";
-
 export type LensTechnology = {
     id: string,
     code: string;
     name: string;
     description: string | null;
     sortOrder: number;
+    lensPrices: {
+        code: string;
+        kind: string;
+        amountMinor: number;
+    }[];
 };
 
 export type LensTechnologyColor = "GREY" | "AMBER";
@@ -112,6 +115,12 @@ export default function LensTechnologySelector({
                                             {technology.description && (
                                                 <p className="mt-2 text-sm leading-6 text-slate-500">
                                                     {technology.description}
+                                                </p>
+                                            )}
+
+                                            {technology.lensPrices?.length > 0 && (
+                                                <p className="mt-5 text-sm font-semibold text-blue-600">
+                                                    From ${(technology.lensPrices[0].amountMinor / 100).toFixed(2)}
                                                 </p>
                                             )}
                                         </div>

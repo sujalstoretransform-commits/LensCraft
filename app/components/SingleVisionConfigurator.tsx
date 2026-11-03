@@ -129,7 +129,7 @@ export default function SingleVisionConfigurator({
                                         {prices.map((price) => (
                                             <p
                                                 key={price.code}
-                                                className="mt-3 text-sm font-medium text-slate-700"
+                                                className="mt-5 text-sm font-semibold text-blue-600"
                                             >
                                                 {price.kind === "upgrade" ? "Upgrade" : "Price"}:{" "}
                                                 {formatPrice(price.amountMinor)}

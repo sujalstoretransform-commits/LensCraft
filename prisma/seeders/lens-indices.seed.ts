@@ -14,9 +14,19 @@ const lensIndices = [
     refractiveIndex: "1.56",
   },
   {
+    code: "index_159",
+    displayName: "Thin 1.59",
+    refractiveIndex: "1.59",
+  },
+  {
     code: "index_160",
     displayName: "Thin 1.60",
     refractiveIndex: "1.60",
+  },
+  {
+    code: "index_161",
+    displayName: "Thin 1.61",
+    refractiveIndex: "1.61",
   },
   {
     code: "index_167",
@@ -27,16 +37,6 @@ const lensIndices = [
     code: "index_174",
     displayName: "Ultra Thin 1.74",
     refractiveIndex: "1.74",
-  },
-  {
-    code: "index_161",
-    displayName: "Thin 1.61",
-    refractiveIndex: "1.61",
-  },
-  {
-    code: "index_159",
-    displayName: "Thin 1.59",
-    refractiveIndex: "1.59",
   },
 ] as const;
 

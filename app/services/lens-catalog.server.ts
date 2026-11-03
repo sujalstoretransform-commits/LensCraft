@@ -101,6 +101,11 @@ const getLensOptions = (currencyCode: string) => {
                     }
                 },
                 select: {
+                    lensType: {
+                        select: {
+                            code: true,
+                        },
+                    },
                     lensTechnology: {
                         select: {
                             id: true,
@@ -108,6 +113,13 @@ const getLensOptions = (currencyCode: string) => {
                             name: true,
                             description: true,
                             sortOrder: true,
+                            lensPrices: {
+                                where: {
+                                    active: true,
+                                    currencyCode,
+                                },
+                                select: priceFields,
+                            },
                         },
                     },
                 },
@@ -182,6 +194,10 @@ const getLensTechnologies = () => {
             name: true,
             description: true,
             sortOrder: true,
+            lensPrices: {
+                where: { active: true, },
+                select: priceFields,
+            },
         },
     });
 }
