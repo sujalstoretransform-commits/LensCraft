@@ -9,9 +9,10 @@ import SingleVisionConfigurator from "./SingleVisionConfigurator";
 import ConfigurationReview from "./ConfigurationReview";
 import { validatePrescription, type Prescription, } from "app/services/prescription";
 import { calculatePrice, PriceError } from "app/services/lens-pricing";
-import PrescriptionSelection, { PrescriptionMethod } from "./PrescriptionSelection";
+import PrescriptionSelection, { type PrescriptionMethodCode } from "./PrescriptionSelection";
 import CoatingReview, { type CoatingSelection } from "./CoatingReview";
 import LensTechnologySelector, { type LensTechnologyColor, } from "./LensTechnologySelector";
+import SavedPrescriptionSelector from "./SavedPrescriptionSelector";
 
 type PriceResult = {
   items: {
@@ -22,6 +23,20 @@ type PriceResult = {
   frameMinor: number;
   lensTotalMinor: number;
   totalMinor: number;
+};
+
+type SavedPrescription = {
+  id: string;
+  name: string;
+  rightSph: string | null;
+  rightCyl: string | null;
+  rightAxis: number | null;
+  leftSph: string | null;
+  leftCyl: string | null;
+  leftAxis: number | null;
+  pd: string | null;
+  prescribedAt: string | null;
+  expiresAt: string | null;
 };
 
 export default function LensConfiguratorPage({
@@ -37,6 +52,7 @@ export default function LensConfiguratorPage({
     catalog,
     lensIndices,
     lensVariantByMinor,
+    proxyPathPrefix,
   } = data;
 
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8>(1);
@@ -54,7 +70,7 @@ export default function LensConfiguratorPage({
   const [priceResult, setPriceResult] = useState<PriceResult | null>(null);
   const [priceError, setPriceError] = useState("");
   const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
-  const [prescriptionMethod, setPrescriptionMethod] = useState<PrescriptionMethod | null>(null);
+  const [prescriptionMethod, setPrescriptionMethod] = useState<PrescriptionMethodCode | null>(null);
   const [coatingSelection, setCoatingSelection] = useState<CoatingSelection>([]);
 
   const [selectedCoatings, setSelectedCoatings] = useState<string[]>([]);
@@ -63,6 +79,9 @@ export default function LensConfiguratorPage({
   const [selectedTechnologyColor, setSelectedTechnologyColor] = useState<"GREY" | "AMBER">("GREY");
 
   const selectedTechnologyName = catalog.lensTechnology.find((technology) => technology.code === selectedTechnologyCode)?.name
+
+  const [prescriptionStep, setPrescriptionStep] = useState<"saved" | "review" | null>(null);
+  const [selectedSavedPrescription, setSelectedSavedPrescription] = useState<SavedPrescription | null>(null);
 
   const usesLensTechnology = [
     "light_adaptive",
@@ -213,20 +232,48 @@ export default function LensConfiguratorPage({
 
         {step === 2 && (
           <PrescriptionSelection
+            methods={catalog.prescriptionMethods}
             onBack={() => setStep(1)}
             onContinue={(method) => {
               setPrescriptionMethod(method)
 
               if (method === "manual") {
+                setPrescriptionStep(null)
                 setStep(3);
+              }
+              else if (method === 'saved') {
+                setPrescriptionStep("saved")
+                setStep(3)
+              }
+              else {
+                return
               }
             }}
           />
         )}
 
-        {step === 3 && (
+        {step === 3 && prescriptionMethod !== "manual" && prescriptionStep === "saved" && (
+          <SavedPrescriptionSelector
+            proxyPathPrefix={proxyPathPrefix}
+            onBack={() => {
+              setPrescriptionStep(null)
+              setStep(2)
+            }}
+            onUseManual={() => {
+              setPrescriptionStep(null)
+              setPrescriptionMethod("manual")
+            }}
+            onSelect={(prescription) => {
+              setSelectedSavedPrescription(prescription)
+              setPrescriptionStep("review")
+            }}
+          />
+        )}
+
+        {step === 3 && prescriptionMethod === 'manual' && (
           <PrescriptionForm
             lensIndexName={selectedLensTypeName}
+            proxyPathPrefix={proxyPathPrefix}
             refractiveIndex={
               lensIndices.find((index) => index.code === selectedLensIndexCode)
                 ?.refractiveIndex ?? null

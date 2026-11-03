@@ -3,6 +3,7 @@ import { useState } from "react";
 type PrescriptionFormProps = {
     lensIndexName: string;
     refractiveIndex: number | null;
+    proxyPathPrefix: string | null;
     onBack: () => void;
     onContinue: (prescription: PrescriptionData, prescriptionImage?: File) => void;
     initialValues?: PrescriptionData;
@@ -25,6 +26,7 @@ export default function PrescriptionForm(
     {
         lensIndexName,
         refractiveIndex,
+        proxyPathPrefix,
         onBack,
         onContinue,
         initialValues,
@@ -45,8 +47,10 @@ export default function PrescriptionForm(
     );
 
     const [prescriptionImage, setPrescriptionImage] = useState<File | null>(null);
-
     const [imageError, setImageError] = useState("");
+
+    const [saveError, setSaveError] = useState("")
+    const [isSaving, setIsSaving] = useState(false)
 
     const updateField = (field: keyof PrescriptionData, value: string) => {
         setPrescription((current) => ({
@@ -58,13 +62,59 @@ export default function PrescriptionForm(
     const inputClass =
         "w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
 
-    const handleContinue = () => {
+    const handleContinue = async () => {
         if (requirePrescriptionImage && !prescriptionImage) {
             setImageError("Prescription image is required.");
             return;
         }
 
-        onContinue(prescription, prescriptionImage ?? undefined);
+        setIsSaving(true)
+        setSaveError("")
+
+        try {
+            if (!proxyPathPrefix?.startsWith("/") || proxyPathPrefix.startsWith("//")) {
+                throw new Error("Prescription saving is only available through the Shopify app proxy.");
+            }
+
+            const endpoint = new URL(
+                `${proxyPathPrefix}/lens-saved-prescriptions`,
+                window.location.origin,
+            );
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                },
+                body: JSON.stringify({
+                    name: "My Prescription",
+                    ...prescription,
+                }),
+            });
+
+            const result: unknown = await response.json().catch(() => null);
+            const errorMessage =
+                typeof result === "object" &&
+                    result !== null &&
+                    "error" in result &&
+                    typeof result.error === "string"
+                    ? result.error
+                    : `Unable to save prescription (HTTP ${response.status}).`;
+
+            if (!response.ok) {
+                throw new Error(errorMessage);
+            }
+
+            onContinue(prescription, prescriptionImage ?? undefined);
+        } catch (error) {
+            setSaveError(
+                error instanceof Error ? error.message : "Unable to save prescription.",
+            );
+        }
+        finally {
+            setIsSaving(false)
+        }
+
     };
 
     return (
@@ -111,6 +161,8 @@ export default function PrescriptionForm(
                                         step="0.25"
                                         value={prescription.rightSph}
                                         placeholder="-2.00"
+                                        min='-15'
+                                        max='10'
                                         onChange={(event) => updateField("rightSph", event.target.value)}
                                     />
                                 </td>
@@ -122,6 +174,8 @@ export default function PrescriptionForm(
                                         step="0.25"
                                         value={prescription.rightCyl}
                                         placeholder="-0.50"
+                                        min='-6'
+                                        max='6'
                                         onChange={(event) => updateField("rightCyl", event.target.value)}
 
                                     />
@@ -150,6 +204,8 @@ export default function PrescriptionForm(
                                         step="0.25"
                                         value={prescription.leftSph}
                                         placeholder="-1.50"
+                                        min='-15'
+                                        max='10'
                                         onChange={(event) => updateField("leftSph", event.target.value)}
                                     />
                                 </td>
@@ -161,6 +217,8 @@ export default function PrescriptionForm(
                                         step="0.25"
                                         value={prescription.leftCyl}
                                         placeholder="-0.25"
+                                        min='-6'
+                                        max='6'
                                         onChange={(event) => updateField("leftCyl", event.target.value)}
                                     />
                                 </td>
@@ -254,6 +312,12 @@ export default function PrescriptionForm(
                     </div>
                 )}
 
+                {saveError && (
+                    <p className="mt-3 text-sm text-red-600" role="alert">
+                        {saveError}
+                    </p>
+                )}
+
                 <div className="mt-8 flex items-center justify-between gap-4 border-t border-slate-100 pt-6">
                     <button
                         type="button"
@@ -265,9 +329,10 @@ export default function PrescriptionForm(
                     <button
                         type="button"
                         onClick={handleContinue}
+                        disabled={isSaving}
                         className="rounded-lg bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-700"
                     >
-                        Continue
+                        {isSaving ? "Saving..." : "Continue"}
                     </button>
                 </div>
 

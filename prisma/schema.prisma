@@ -255,3 +255,43 @@ model LensTechnologyOption {
   @@index([lensTypeId, lensOptionId, active])
   @@index([lensTechnologyId, active])
 }
+
+model prescriptionMethod {
+  id          String  @id @default(cuid())
+  code        String  @unique
+  name        String
+  description String?
+  active      Boolean @default(true)
+  sortOrder   Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, sortOrder])
+}
+
+model SavedPrescription {
+  id         String @id @default(cuid())
+  shop       String
+  customerId String
+  name       String
+
+  rightSph  Decimal? @db.Decimal(5, 2)
+  rightCyl  Decimal? @db.Decimal(5, 2)
+  rightAxis Int?
+
+  leftSph  Decimal? @db.Decimal(5, 2)
+  leftCyl  Decimal? @db.Decimal(5, 2)
+  leftAxis Int?
+
+  pd Decimal? @db.Decimal(5, 2)
+
+  prescribedAt DateTime?
+  expiresAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([shop, customerId])
+  @@index([shop, customerId, updatedAt])
+}

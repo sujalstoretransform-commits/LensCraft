@@ -12,6 +12,7 @@ const seeders = [
     "lens-index-compatibility.seed.ts",
     "lens-price.seed.ts",
     "lens-technology-options.seed.ts",
+    "lens-prescription-method.seed.ts"
 ];
 
 for (const file of seeders) {

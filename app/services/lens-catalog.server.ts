@@ -1,4 +1,5 @@
 import prisma from "../db.server";
+import type { PrescriptionMethodCode } from "../components/PrescriptionSelection";
 
 const priceFields = {
     code: true,
@@ -202,6 +203,29 @@ const getLensTechnologies = () => {
     });
 }
 
+const isPrescriptionMethodCode = (
+    code: string,
+): code is PrescriptionMethodCode => {
+    return ["manual", "upload", "saved", "later"].includes(code);
+};
+
+const getPrescriptionMethods = async () => {
+    const prescriptionMethods = await prisma.prescriptionMethod.findMany({
+        where: { active: true },
+        orderBy: { sortOrder: "asc" },
+        select: {
+            code: true,
+            name: true,
+            description: true,
+        }
+    });
+
+    return prescriptionMethods.filter(
+        (method): method is typeof method & { code: PrescriptionMethodCode } =>
+            isPrescriptionMethodCode(method.code),
+    );
+}
+
 
 export const loadLensCatalog = async (currencyCode: string) => {
     const [
@@ -212,6 +236,7 @@ export const loadLensCatalog = async (currencyCode: string) => {
         lensIndexCompatibilities,
         lensTechnologies,
         lensTechnologyIndexCompatibility,
+        prescriptionMethods,
     ] = await Promise.all([
         getLensTypes(currencyCode),
         getLensIndices(currencyCode),
@@ -220,6 +245,7 @@ export const loadLensCatalog = async (currencyCode: string) => {
         getLensIndexCompatibilities(),
         getLensTechnologies(),
         getLensTechnologyIndexCompatibility(),
+        getPrescriptionMethods(),
     ]);
 
     return {
@@ -230,5 +256,6 @@ export const loadLensCatalog = async (currencyCode: string) => {
         lensIndexCompatibilities,
         lensTechnologies,
         lensTechnologyIndexCompatibility,
+        prescriptionMethods,
     };
 }
