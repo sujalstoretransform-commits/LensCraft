@@ -1,4 +1,4 @@
-import { Outlet, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
 
 import LensConfiguratorPage from "app/components/LensConfiguratorPage";
@@ -10,11 +10,5 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function AppProxyPage() {
   const data = useLoaderData<typeof loader>();
-
-  return (
-    <>
-      <LensConfiguratorPage data={data} />
-      <Outlet />
-    </>
-  );
+  return <LensConfiguratorPage data={data} />
 }
