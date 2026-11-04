@@ -58,6 +58,7 @@ export default function LensConfiguratorPage({
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8>(1);
   const [prescriptionValues, setPrescriptionValues] = useState<PrescriptionData | undefined>();
   const [prescriptionImage, setPrescriptionImage] = useState<File | null>(null);
+  const [prescriptionImageName, setPrescriptionImageName] = useState<string | null>(null);
   const [prescriptionErrors, setPrescriptionErrors] = useState<string[]>([]);
   const [selectedVisionTypeCode, setSelectedVisionTypeCode] = useState("single_vision_distance",);
   const [selectedLensIndexCode, setSelectedLensIndexCode] = useState("");
@@ -81,7 +82,6 @@ export default function LensConfiguratorPage({
   const selectedTechnologyName = catalog.lensTechnology.find((technology) => technology.code === selectedTechnologyCode)?.name
 
   const [prescriptionStep, setPrescriptionStep] = useState<"saved" | "review" | null>(null);
-  const [selectedSavedPrescription, setSelectedSavedPrescription] = useState<SavedPrescription | null>(null);
 
   const usesLensTechnology = [
     "light_adaptive",
@@ -107,7 +107,12 @@ export default function LensConfiguratorPage({
         )
         .map((compatibility) => compatibility.lensIndex.code);
 
-  const handlePrescriptionContinue = (values: PrescriptionData, image?: File) => {
+  const handlePrescriptionContinue = (
+    values: PrescriptionData,
+    image?: File,
+    fileUrl?: string,
+    fileName?: string,
+  ) => {
     const toNumber = (value: string) => value.trim() === "" ? undefined : Number(value);
 
     const prescription: Prescription = {
@@ -130,13 +135,14 @@ export default function LensConfiguratorPage({
       return;
     }
 
-    if (selectedVisionTypeCode === "progressive" && !image) {
+    if (selectedVisionTypeCode === "progressive" && !image && !fileUrl) {
       setPrescriptionErrors(["Prescription image is required for progressive lenses."]);
       return;
     }
 
     setPrescriptionValues(values);
     setPrescriptionImage(image ?? null);
+    setPrescriptionImageName(image?.name ?? fileName ?? null);
     setPrescriptionErrors([]);
     setStep(4);
   };
@@ -255,18 +261,19 @@ export default function LensConfiguratorPage({
         {step === 3 && prescriptionMethod !== "manual" && prescriptionStep === "saved" && (
           <SavedPrescriptionSelector
             proxyPathPrefix={proxyPathPrefix}
+            errors={prescriptionErrors}
+            onSelectionChange={() => setPrescriptionErrors([])}
             onBack={() => {
               setPrescriptionStep(null)
+              setPrescriptionErrors([]);
               setStep(2)
             }}
             onUseManual={() => {
               setPrescriptionStep(null)
               setPrescriptionMethod("manual")
             }}
-            onSelect={(prescription) => {
-              setSelectedSavedPrescription(prescription)
-              setPrescriptionStep("review")
-            }}
+            onContinue={handlePrescriptionContinue}
+            requirePrescriptionImage={selectedVisionTypeCode === "progressive"}
           />
         )}
 
@@ -425,6 +432,7 @@ export default function LensConfiguratorPage({
             selectedTechnologyName={selectedTechnologyName ?? ""}
             selectedTechnologyColor={selectedTechnologyColor}
             prescriptionImage={prescriptionImage}
+            prescriptionImageName={prescriptionImageName}
           />
         )}
       </div>

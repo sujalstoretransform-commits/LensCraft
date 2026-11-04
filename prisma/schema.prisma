@@ -286,6 +286,11 @@ model SavedPrescription {
 
   pd Decimal? @db.Decimal(5, 2)
 
+  fileKey  String?
+  fileName String?
+  fileType String?
+  fileSize Int?
+
   prescribedAt DateTime?
   expiresAt    DateTime?
 

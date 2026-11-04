@@ -59,8 +59,7 @@ export default function PrescriptionForm(
         }))
     }
 
-    const inputClass =
-        "w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
+    const inputClass = "w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
 
     const handleContinue = async () => {
         if (requirePrescriptionImage && !prescriptionImage) {
@@ -76,23 +75,30 @@ export default function PrescriptionForm(
                 throw new Error("Prescription saving is only available through the Shopify app proxy.");
             }
 
-            const endpoint = new URL(
-                `${proxyPathPrefix}/lens-saved-prescriptions`,
-                window.location.origin,
-            );
+            const endpoint = new URL(`${proxyPathPrefix}/lens-saved-prescriptions`, window.location.origin,);
+
+            const formData = new FormData();
+
+            formData.append("name", "My Prescription")
+
+            Object.entries(prescription).forEach(([Key, value]) => {
+                formData.append(Key, value)
+            })
+
+            if (prescriptionImage) {
+                formData.append("prescriptionImage", prescriptionImage)
+            }
+
             const response = await fetch(endpoint, {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
                     Accept: "application/json",
                 },
-                body: JSON.stringify({
-                    name: "My Prescription",
-                    ...prescription,
-                }),
+                body: formData
             });
 
             const result: unknown = await response.json().catch(() => null);
+
             const errorMessage =
                 typeof result === "object" &&
                     result !== null &&
@@ -282,6 +288,7 @@ export default function PrescriptionForm(
                             required
                             onChange={(event) => {
                                 const file = event.target.files?.[0] ?? null;
+
                                 setPrescriptionImage(file);
                                 setImageError("");
                             }}

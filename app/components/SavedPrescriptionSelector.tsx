@@ -1,15 +1,24 @@
 import { useEffect, useState } from "react";
+import type { PrescriptionData } from "./PrescriptionForm";
 
 type SavedPrescription = {
     id: string;
     name: string;
+
     rightSph: string | null;
     rightCyl: string | null;
     rightAxis: number | null;
+
     leftSph: string | null;
     leftCyl: string | null;
     leftAxis: number | null;
+
     pd: string | null;
+
+    fileUrl: string | null;
+    fileName: string | null;
+    fileType: string | null;
+
     prescribedAt: string | null;
     expiresAt: string | null;
 };
@@ -17,19 +26,64 @@ type SavedPrescription = {
 type Props = {
     proxyPathPrefix: string | null;
     onBack: () => void;
-    onSelect: (prescription: SavedPrescription) => void;
     onUseManual: () => void;
+    errors: string[];
+    onSelectionChange: () => void;
+    onContinue: (
+        prescription: PrescriptionData,
+        image?: File,
+        fileUrl?: string,
+        fileName?: string,
+    ) => void;
+    requirePrescriptionImage: boolean;
 };
 
 export default function SavedPrescriptionSelector({
     proxyPathPrefix,
     onBack,
-    onSelect,
     onUseManual,
+    errors,
+    onSelectionChange,
+    onContinue,
+    requirePrescriptionImage,
 }: Props) {
     const [prescriptions, setPrescriptions] = useState<SavedPrescription[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [validationError, setValidationError] = useState("");
+
+    const [selectedPrescription, setSelectedPrescription] = useState<SavedPrescription | null>(null);
+
+
+    const onHandleContinue = () => {
+        if (!selectedPrescription) {
+            setValidationError("Please select a saved prescription.");
+            return
+        }
+
+        if (!selectedPrescription.fileUrl && requirePrescriptionImage) {
+            setValidationError(
+                "This prescription has no attached file. Please enter your prescription manually."
+            );
+            return;
+        }
+
+        onContinue(
+            {
+                rightSph: selectedPrescription.rightSph ?? "",
+                rightCyl: selectedPrescription.rightCyl ?? "",
+                rightAxis: selectedPrescription.rightAxis?.toString() ?? "",
+                leftSph: selectedPrescription.leftSph ?? "",
+                leftCyl: selectedPrescription.leftCyl ?? "",
+                leftAxis: selectedPrescription.leftAxis?.toString() ?? "",
+                pd: selectedPrescription.pd ?? "",
+            },
+            undefined,
+            selectedPrescription.fileUrl ?? undefined,
+            selectedPrescription.fileName ?? undefined,
+        )
+    }
+
 
     useEffect(() => {
         const controller = new AbortController();
@@ -83,7 +137,7 @@ export default function SavedPrescriptionSelector({
     return (
         <section className="w-full bg-white px-6 py-6 md:px-12">
             <div className="mb-4">
-                <h1 className="text-2xl font-semibold text-slate-900">
+                <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
                     Choose a saved prescription
                 </h1>
                 <p className="mt-2 text-sm text-slate-500">
@@ -125,39 +179,83 @@ export default function SavedPrescriptionSelector({
                         <button
                             key={prescription.id}
                             type="button"
-                            onClick={() => onSelect(prescription)}
-                            className="rounded-xl border border-slate-200 p-5 text-left transition hover:border-slate-900"
+                            onClick={() => {
+                                setSelectedPrescription(prescription)
+                                setValidationError("")
+                                onSelectionChange()
+                            }}
+                            className={`group w-full rounded-xl border p-5 text-left transition-all duration-200 ${selectedPrescription?.id === prescription.id
+                                ? "border-blue-600 bg-blue-50"
+                                : "border-slate-200 bg-white hover:border-blue-400"
+                                }`
+                            }
                         >
-                            <span className="font-semibold text-slate-900">
-                                {prescription.name}
-                            </span>
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-base font-semibold text-slate-900">
+                                    {prescription.name}
+                                </h3>
 
-                            <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                                <span className="text-sm font-medium text-blue-600 opacity-0 transition group-hover:opacity-100">
+                                    Select →
+                                </span>
+                            </div>
+
+                            <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
                                 <div>
-                                    <p className="font-medium text-slate-700">Right eye (OD)</p>
-                                    <p className="mt-1 text-slate-600">
-                                        SPH: {prescription.rightSph ?? "—"} · CYL:{" "}
-                                        {prescription.rightCyl ?? "—"} · Axis:{" "}
-                                        {prescription.rightAxis ?? "—"}
+                                    <p className="text-sm font-semibold text-slate-800">
+                                        Right eye (OD)
+                                    </p>
+
+                                    <p className="mt-1.5 text-sm text-slate-500">
+                                        SPH: <span className="font-medium text-slate-700">{prescription.rightSph ?? "—"}</span>
+                                        {" · "}
+                                        CYL: <span className="font-medium text-slate-700">{prescription.rightCyl ?? "—"}</span>
+                                        {" · "}
+                                        Axis: <span className="font-medium text-slate-700">{prescription.rightAxis ?? "—"}</span>
                                     </p>
                                 </div>
 
                                 <div>
-                                    <p className="font-medium text-slate-700">Left eye (OS)</p>
-                                    <p className="mt-1 text-slate-600">
-                                        SPH: {prescription.leftSph ?? "—"} · CYL:{" "}
-                                        {prescription.leftCyl ?? "—"} · Axis:{" "}
-                                        {prescription.leftAxis ?? "—"}
+                                    <p className="text-sm font-semibold text-slate-800">
+                                        Left eye (OS)
+                                    </p>
+
+                                    <p className="mt-1.5 text-sm text-slate-500">
+                                        SPH: <span className="font-medium text-slate-700">{prescription.leftSph ?? "—"}</span>
+                                        {" · "}
+                                        CYL: <span className="font-medium text-slate-700">{prescription.leftCyl ?? "—"}</span>
+                                        {" · "}
+                                        Axis: <span className="font-medium text-slate-700">{prescription.leftAxis ?? "—"}</span>
                                     </p>
                                 </div>
                             </div>
 
-                            <p className="mt-3 text-sm text-slate-500">
-                                PD: {prescription.pd ?? "—"}
+                            <p className="mt-4 text-sm text-slate-500">
+                                PD: <span className="font-semibold text-slate-800">{prescription.pd ?? "—"} mm</span>
                             </p>
-                            <span className="mt-4 inline-block text-sm font-medium text-slate-900">
+
+                            {prescription.fileUrl && (
+                                <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                    <p className="text-sm font-semibold text-slate-800">
+                                        Attached prescription
+                                    </p>
+
+                                    <a
+                                        href={prescription.fileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(event) => event.stopPropagation}
+                                        className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+                                    >
+                                        View {prescription.fileName || "prescription file"}
+                                        <span aria-hidden="true">↗</span>
+                                    </a>
+                                </div>
+                            )}
+
+                            <p className="mt-4 text-sm font-semibold text-blue-600 transition group-hover:text-blue-700">
                                 Use this prescription →
-                            </span>
+                            </p>
                         </button>
                     ))}
                 </div>
@@ -171,6 +269,19 @@ export default function SavedPrescriptionSelector({
                         Enter a different prescription manually
                     </button>
                 )}
+
+                {validationError && (
+                    <p role="alert" className="mt-4 text-sm font-medium text-red-600">
+                        {validationError}
+                    </p>
+                )}
+                {errors.length > 0 && (
+                    <ul role="alert" className="mt-4 space-y-1 text-sm font-medium text-red-600">
+                        {errors.map((message) => (
+                            <li key={message}>{message}</li>
+                        ))}
+                    </ul>
+                )}
             </div>
 
             <div className="mt-8 flex items-center justify-between gap-4 border-t border-slate-100 pt-6">
@@ -180,6 +291,14 @@ export default function SavedPrescriptionSelector({
                     className="rounded-lg border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
                     Back
+                </button>
+
+                <button
+                    type="button"
+                    onClick={onHandleContinue}
+                    className="rounded-lg bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-700"
+                >
+                    Continue
                 </button>
             </div>
         </section>

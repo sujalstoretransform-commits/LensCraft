@@ -24,6 +24,7 @@ type ConfigurationReviewProps = {
   selectedTechnologyName: string;
   selectedTechnologyColor: "GREY" | "AMBER";
   prescriptionImage?: File | null;
+  prescriptionImageName?: string | null;
 };
 
 export default function ConfigurationReview({
@@ -45,6 +46,7 @@ export default function ConfigurationReview({
   selectedTechnologyName,
   selectedTechnologyColor,
   prescriptionImage,
+  prescriptionImageName,
 }: ConfigurationReviewProps
 ) {
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -90,7 +92,7 @@ export default function ConfigurationReview({
       "Selected Coating": selectedCoatings.length > 0 ? selectedCoatings.join(", ") : "None",
       "Selected Technology": selectedTechnologyName || "N/A",
       "Selected Technology Color": selectedTechnologyColor,
-      "Prescription Image": prescriptionImage ? prescriptionImage.name : "None",
+      "Prescription Image": prescriptionImageName ?? prescriptionImage?.name ?? "None",
       PD: prescription.pd || "N/A",
     };
 
@@ -287,7 +289,7 @@ export default function ConfigurationReview({
           </div>
         </div>
 
-        {prescriptionImage && (
+        {(prescriptionImage || prescriptionImageName) && (
           <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-5">
             <h2 className="text-lg font-semibold text-slate-900">
               Prescription Image
@@ -300,7 +302,7 @@ export default function ConfigurationReview({
 
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-slate-900">
-                  {prescriptionImage.name}
+                  {prescriptionImageName ?? prescriptionImage?.name}
                 </p>
                 <p className="mt-1 text-sm text-green-700">
                   Image selected
