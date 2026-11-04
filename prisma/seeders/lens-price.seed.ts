@@ -1,34 +1,46 @@
-
 import { PrismaClient, LensPriceKind } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 const CURRENCY_CODE = "USD";
 
-// TEST prices in cents. Replace with real pricing before production.
-const BASE_PRICE_MINOR = 1000;
+const LENS_TYPE_PRICING = [
+  {
+    lensTypeCode: "single_vision_distance",
+    basePriceMinor: 1000,
+  },
+  {
+    lensTypeCode: "single_vision_reading",
+    basePriceMinor: 3000,
+  },
+  {
+    lensTypeCode: "progressive",
+    basePriceMinor: 5000,
+  },
+];
 
 function getIndexUpgradeMinor(refractiveIndex: number): number {
-  if (refractiveIndex <= 1.5) return 0;
+  if (refractiveIndex <= 1.50) return 0;
   if (refractiveIndex <= 1.56) return 500;
-  if (refractiveIndex <= 1.6) return 1000;
-  if (refractiveIndex <= 1.67) return 1500;
-  return 2000;
+  if (refractiveIndex <= 1.59) return 1000;
+  if (refractiveIndex <= 1.60) return 1500;
+  if (refractiveIndex <= 1.61) return 2000;
+  if (refractiveIndex <= 1.67) return 2500;
+  if (refractiveIndex <= 1.74) return 3000;
+  return 3500;
 }
 
-async function seedLensPrices() {
-  // Support the codes used in the existing catalog and UI.
-  const lensType =
-    (await prisma.lensType.findUnique({
-      where: { code: "single_vision_distance" },
-    })) ??
-    (await prisma.lensType.findUnique({
-      where: { code: "single_vision" },
-    }));
+async function seedLensTypePrices(
+  lensTypeCode: string,
+  basePriceMinor: number,
+) {
+  const lensType = await prisma.lensType.findUnique({
+    where: { code: lensTypeCode },
+  });
 
   if (!lensType) {
     throw new Error(
-      'Single Vision lens type not found. Expected code "single_vision_distance" or "single_vision".',
+      `Lens type "${lensTypeCode}" not found. Seed lens types first.`,
     );
   }
 
@@ -38,14 +50,19 @@ async function seedLensPrices() {
   });
 
   if (lensIndices.length === 0) {
-    throw new Error("No active lens indices found. Seed LensIndex first.");
+    throw new Error(
+      "No active lens indices found. Seed lens indices first.",
+    );
   }
 
+  // Create or update the base price for this lens type.
+  const baseCode = `test-${lensType.code}-base-usd`;
+
   await prisma.lensPrice.upsert({
-    where: { code: `test-${lensType.code}-base-usd` },
+    where: { code: baseCode },
     update: {
       kind: LensPriceKind.base,
-      amountMinor: BASE_PRICE_MINOR,
+      amountMinor: basePriceMinor,
       currencyCode: CURRENCY_CODE,
       lensTypeId: lensType.id,
       lensIndexId: null,
@@ -53,19 +70,23 @@ async function seedLensPrices() {
       active: true,
     },
     create: {
-      code: `test-${lensType.code}-base-usd`,
+      code: baseCode,
       kind: LensPriceKind.base,
-      amountMinor: BASE_PRICE_MINOR,
+      amountMinor: basePriceMinor,
       currencyCode: CURRENCY_CODE,
       lensTypeId: lensType.id,
       active: true,
     },
   });
 
+  console.log(
+    `${lensType.code}: base price $${(basePriceMinor / 100).toFixed(2)}`,
+  );
+
+  // Create or update index-upgrade prices.
   for (const index of lensIndices) {
     const refractiveIndex = Number(index.refractiveIndex);
     const amountMinor = getIndexUpgradeMinor(refractiveIndex);
-
     const code = `test-${lensType.code}-${index.code}-upgrade-usd`;
 
     await prisma.lensPrice.upsert({
@@ -91,7 +112,9 @@ async function seedLensPrices() {
     });
 
     console.log(
-      `${index.code} (${refractiveIndex}): $${(amountMinor / 100).toFixed(2)} upgrade`,
+      `${lensType.code} | ${index.code} (${refractiveIndex}): $${(
+        amountMinor / 100
+      ).toFixed(2)} upgrade`,
     );
   }
 
@@ -100,9 +123,22 @@ async function seedLensPrices() {
   );
 }
 
-seedLensPrices()
+async function main() {
+  console.log("Seeding lens prices...");
+
+  for (const pricing of LENS_TYPE_PRICING) {
+    await seedLensTypePrices(
+      pricing.lensTypeCode,
+      pricing.basePriceMinor,
+    );
+  }
+
+  console.log("Lens price seeding completed.");
+}
+
+main()
   .catch((error) => {
-    console.error("LensPrice seeding failed:", error);
+    console.error("Lens price seeding failed:", error);
     process.exitCode = 1;
   })
   .finally(async () => {

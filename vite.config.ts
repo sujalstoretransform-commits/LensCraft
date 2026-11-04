@@ -40,13 +40,13 @@ if (host === "localhost") {
 // Public URL of this app (the tunnel URL in dev). Used to make asset URLs
 // absolute so they still load when the page is served through the storefront
 // app proxy (https://<store>/apps/lenscraft).
-const appUrl = process.env.SHOPIFY_APP_URL || "/";
+const appUrl = process.env.SHOPIFY_APP_URL;
 
 export default defineConfig({
   base: appUrl ? `${appUrl}/` : "/",
   server: {
     origin: appUrl,
-    allowedHosts: [host],
+    allowedHosts: [host, ".trycloudflare.com"],
     // Let the storefront (…myshopify.com) load scripts/styles from this server.
     // If your store uses a custom domain, add it here, e.g. "https://www.example.com"
     cors: {

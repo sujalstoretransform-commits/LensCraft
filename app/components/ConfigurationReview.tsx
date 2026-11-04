@@ -7,7 +7,8 @@ type ConfigurationReviewProps = {
   lensOptionName: string;
   lensIndexName: string;
   refractiveIndex: number;
-  prescription: PrescriptionData;
+  prescription?: PrescriptionData;
+  isUploadOnly: boolean;
   onBack?: () => void;
   framePriceMinor: number;
   lensVariantId: string | null;
@@ -23,6 +24,8 @@ type ConfigurationReviewProps = {
   selectedCoatings: string[];
   selectedTechnologyName: string;
   selectedTechnologyColor: "GREY" | "AMBER";
+  prescriptionImage?: File | null;
+  prescriptionImageName?: string | null;
 };
 
 export default function ConfigurationReview({
@@ -32,6 +35,7 @@ export default function ConfigurationReview({
   lensIndexName,
   refractiveIndex,
   prescription,
+  isUploadOnly,
   onBack,
   framePriceMinor,
   lensVariantId,
@@ -42,7 +46,9 @@ export default function ConfigurationReview({
   priceItems,
   selectedCoatings,
   selectedTechnologyName,
-  selectedTechnologyColor
+  selectedTechnologyColor,
+  prescriptionImage,
+  prescriptionImageName,
 }: ConfigurationReviewProps
 ) {
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -65,7 +71,7 @@ export default function ConfigurationReview({
     setIsAddingToCart(true);
     setCartError(null);
 
-    if (lensTotalMinor > 0 && !lensVariantId) {
+    if (!isUploadOnly && lensTotalMinor > 0 && !lensVariantId) {
       setCartError("Lens price is not available. Please contact support.");
       setIsAddingToCart(false);
       return;
@@ -74,22 +80,27 @@ export default function ConfigurationReview({
     // const storefrontOrigin = window.location.origin;
     const groupId = crypto.randomUUID();
 
-    const rxProperties: Record<string, string> = {
-      "Lens Type": lensTypeName,
-      "Lens Option": lensOptionName,
-      "Lens Index": lensIndexName,
-      "Refractive Index": String(refractiveIndex),
-      "Right SPH": prescription.rightSph || "0",
-      "Right CYL": prescription.rightCyl || "0",
-      "Right Axis": prescription.rightAxis || "N/A",
-      "Left SPH": prescription.leftSph || "0",
-      "Left CYL": prescription.leftCyl || "0",
-      "Left Axis": prescription.leftAxis || "N/A",
-      "Selected Coating": selectedCoatings.length > 0 ? selectedCoatings.join(", ") : "None",
-      "Selected Technology": selectedTechnologyName || "N/A",
-      "Selected Technology Color": selectedTechnologyColor,
-      PD: prescription.pd || "N/A",
-    };
+    const rxProperties: Record<string, string> = isUploadOnly
+      ? {
+          "Prescription Image": prescriptionImageName ?? prescriptionImage?.name ?? "Uploaded prescription",
+        }
+      : {
+          "Lens Type": lensTypeName,
+          "Lens Option": lensOptionName,
+          "Lens Index": lensIndexName,
+          "Refractive Index": String(refractiveIndex),
+          "Right SPH": prescription?.rightSph || "0",
+          "Right CYL": prescription?.rightCyl || "0",
+          "Right Axis": prescription?.rightAxis || "N/A",
+          "Left SPH": prescription?.leftSph || "0",
+          "Left CYL": prescription?.leftCyl || "0",
+          "Left Axis": prescription?.leftAxis || "N/A",
+          "Selected Coating": selectedCoatings.length > 0 ? selectedCoatings.join(", ") : "None",
+          "Selected Technology": selectedTechnologyName || "N/A",
+          "Selected Technology Color": selectedTechnologyColor,
+          "Prescription Image": prescriptionImageName ?? prescriptionImage?.name ?? "None",
+          PD: prescription?.pd || "N/A",
+        };
 
     const fields: Record<string, string> = {
       "items[0][id]": variantId,
@@ -98,7 +109,7 @@ export default function ConfigurationReview({
       return_to: "/cart",
     };
 
-    if (lensTotalMinor > 0 && lensVariantId) {
+    if (!isUploadOnly && lensTotalMinor > 0 && lensVariantId) {
       fields["items[1][id]"] = lensVariantId;
       fields["items[1][quantity]"] = "1";
       fields["items[1][properties][_lens_group]"] = groupId;
@@ -135,15 +146,17 @@ export default function ConfigurationReview({
       <div className="w-full">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">
-            Review Your Configuration
+            {isUploadOnly ? "Review Your Prescription Upload" : "Review Your Configuration"}
           </h1>
 
           <p className="mt-2 text-sm text-slate-500">
-            Check your lens selection and prescription before continuing.
+            {isUploadOnly
+              ? "Check your uploaded prescription before continuing."
+              : "Check your lens selection and prescription before continuing."}
           </p>
         </div>
 
-        <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
+        {!isUploadOnly && <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="flex min-h-[120px] items-start gap-4 rounded-lg border border-slate-200 bg-slate-50 p-5">
             <div className="mt-1 shrink-0 text-xl text-blue-600">◉</div>
             <div className="min-w-0">
@@ -182,9 +195,9 @@ export default function ConfigurationReview({
               </p>
             </div>
           </div>
-        </div>
+        </div>}
 
-        {selectedTechnologyName && (
+        {!isUploadOnly && selectedTechnologyName && (
           <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-5">
             <p className="text-sm font-medium text-slate-500">
               SELECTED LENS TECHNOLOGY
@@ -220,7 +233,7 @@ export default function ConfigurationReview({
           </div>
         )}
 
-        {selectedCoatings.length > 0 && (
+        {!isUploadOnly && selectedCoatings.length > 0 && (
           <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-5">
             <h2 className="text-lg font-semibold text-slate-900">
               Selected Coatings
@@ -240,12 +253,13 @@ export default function ConfigurationReview({
         )}
 
 
-        <div className="mt-8 w-full overflow-hidden rounded-xl border border-slate-200">
-          <div className="border-b border-slate-200 px-5 py-4 md:px-6">
-            <h2 className="text-lg font-semibold text-slate-900">
-              Prescription Details
-            </h2>
-          </div>
+        {prescription && (
+          <div className="mt-8 w-full overflow-hidden rounded-xl border border-slate-200">
+            <div className="border-b border-slate-200 px-5 py-4 md:px-6">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Prescription Details
+              </h2>
+            </div>
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-[480px] table-fixed text-left text-sm">
@@ -282,7 +296,31 @@ export default function ConfigurationReview({
               {prescription.pd || "—"} mm
             </p>
           </div>
-        </div>
+          </div>
+        )}
+
+        {(prescriptionImage || prescriptionImageName) && (
+          <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-5">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Prescription Image
+            </h2>
+
+            <div className="mt-3 flex items-center gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-700">
+                📄
+              </div>
+
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-slate-900">
+                  {prescriptionImageName ?? prescriptionImage?.name}
+                </p>
+                <p className="mt-1 text-sm text-green-700">
+                  {prescriptionImageName?.toLowerCase().endsWith(".pdf") ? "File selected" : "Image selected"}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="mt-8 w-full rounded-xl border border-slate-200 bg-slate-50 p-6">
           <h2 className="text-lg font-semibold text-slate-900">

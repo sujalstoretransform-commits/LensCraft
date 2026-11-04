@@ -3,120 +3,114 @@ import {
   FileUp,
   History,
   Clock,
-  ArrowRight,
 } from "lucide-react";
-import { useState } from "react";
 
-export type PrescriptionMethod =
-  | "manual"
-  | "upload"
-  | "saved"
-  | "later";
+export type PrescriptionMethodCode = "manual" | "upload" | "saved" | "later";
 
-type PrescriptionSelectionProps = {
-  onBack: () => void;
-  onContinue: (method: PrescriptionMethod) => void;
+export type PrescriptionMethodOption = {
+  code: PrescriptionMethodCode;
+  name: string;
+  description: string | null;
 };
 
-const prescriptionMethods = [
-  {
-    id: "manual",
-    title: "Fill it out myself",
-    description: "Type the numbers from your prescription. About a minute.",
-    Icon: ClipboardPenLine,
-  },
-  {
-    id: "upload",
-    title: "Upload a photo or PDF",
-    description: "Snap a picture — we'll enter it for you.",
-    Icon: FileUp,
-  },
-  {
-    id: "saved",
-    title: "Use a saved prescription",
-    description: "From your last order.",
-    Icon: History,
-  },
-  {
-    id: "later",
-    title: "Send it later",
-    description: "Order now, send it within 14 days.",
-    Icon: Clock,
-  },
-] as const;
+type PrescriptionSelectionProps = {
+  selectedMethod: PrescriptionMethodCode | null;
+  methods: PrescriptionMethodOption[];
+  onBack: () => void;
+  onSelectMethod: (method: PrescriptionMethodCode) => void;
+  onContinue: (method: PrescriptionMethodCode) => void;
+};
+
+const prescriptionMethodIcons = {
+  manual: ClipboardPenLine,
+  upload: FileUp,
+  saved: History,
+  later: Clock,
+} satisfies Record<PrescriptionMethodCode, typeof ClipboardPenLine>;
+
+
 
 export default function PrescriptionSelection({
+  selectedMethod,
+  methods,
   onBack,
+  onSelectMethod,
   onContinue,
 }: PrescriptionSelectionProps) {
-  const [selectedMethod, setSelectedMethod] = useState<PrescriptionMethod | null>("manual");
 
   return (
-    <section className="w-full bg-white px-4 py-8 sm:px-6">
+    <section className="w-full px-5 py-8 md:px-12 md:py-12">
       <div className="w-full">
         <div className="mb-8">
-          <p className="mb-2 text-sm font-medium text-blue-600">
-            PRESCRIPTION
+          <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-blue-600">
+            Prescription
           </p>
 
-          <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-            Add your prescription
-          </h2>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 md:text-3xl">
+            How would you like to provide your prescription?
+          </h1>
 
-          <p className="mt-2 text-sm leading-6 text-slate-500 sm:text-base">
-            Choose how you would like to provide your prescription.
+          <p className="mt-3 text-sm leading-6 text-slate-500 md:text-base">
+            Choose how you want to share your prescription with us.
           </p>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {prescriptionMethods.map(
-            ({ id, title, description, Icon }) => {
-              const isSelected = selectedMethod === id;
+          {methods.map((method) => {
+            const Icon = prescriptionMethodIcons[method.code];
+            const isSelected = selectedMethod === method.code;
 
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  aria-pressed={isSelected}
-                  onClick={() => setSelectedMethod(id)}
-                  className={`group flex min-h-32 items-start gap-4 rounded-xl border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${isSelected
-                    ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
-                    : "border-slate-200 bg-white hover:border-blue-400 hover:bg-blue-50/40"
+            return (
+              <button
+                key={method.code}
+                type="button"
+                aria-pressed={isSelected}
+                onClick={() => onSelectMethod(method.code)}
+                className={`group flex w-full items-start gap-4 rounded-xl border p-5 text-left transition ${isSelected
+                  ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
+                  : "border-slate-200 bg-white hover:border-slate-400 hover:bg-slate-50"
+                  }`}
+              >
+                <span
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${isSelected
+                    ? "bg-blue-100 text-blue-700"
+                    : "bg-slate-100 text-slate-600 group-hover:bg-slate-200"
                     }`}
                 >
-                  <span
-                    className={`flex size-12 shrink-0 items-center justify-center rounded-lg transition ${isSelected
-                      ? "bg-blue-100 text-blue-700"
-                      : "bg-blue-50 text-blue-600 group-hover:bg-blue-100"
-                      }`}
-                  >
-                    <Icon size={24} strokeWidth={1.8} />
+                  <Icon size={23} strokeWidth={1.8} />
+                </span>
+
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold text-slate-900">
+                    {method.name}
                   </span>
 
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center justify-between gap-2">
-                      <span className="font-semibold text-slate-800">
-                        {title}
-                      </span>
-
-                      <ArrowRight
-                        size={18}
-                        className={`shrink-0 transition group-hover:translate-x-1 ${isSelected
-                          ? "text-blue-600"
-                          : "text-slate-400 group-hover:text-blue-600"
-                          }`}
-                      />
+                  {method.description && (
+                    <span className="mt-1 block text-sm leading-6 text-slate-500">
+                      {method.description}
                     </span>
+                  )}
+                </span>
 
-                    <span className="mt-2 block text-sm leading-5 text-slate-500">
-                      {description}
-                    </span>
-                  </span>
-                </button>
-              );
-            },
-          )}
+                <span
+                  className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${isSelected
+                    ? "border-blue-600 bg-blue-600"
+                    : "border-slate-300"
+                    }`}
+                >
+                  {isSelected && (
+                    <span className="h-2 w-2 rounded-full bg-white" />
+                  )}
+                </span>
+              </button>
+            )
+          })}
         </div>
+        {methods.length === 0 && (
+          <p className="rounded-lg border border-slate-200 p-5 text-sm text-slate-500">
+            No prescription methods are currently available.
+          </p>
+        )}
 
         <div className="mt-8 flex items-center justify-between gap-4 border-t border-slate-100 pt-6">
           <button
@@ -126,7 +120,6 @@ export default function PrescriptionSelection({
           >
             Back
           </button>
-
           <button
             type="button"
             disabled={!selectedMethod}

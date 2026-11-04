@@ -9,9 +9,11 @@ import SingleVisionConfigurator from "./SingleVisionConfigurator";
 import ConfigurationReview from "./ConfigurationReview";
 import { validatePrescription, type Prescription, } from "app/services/prescription";
 import { calculatePrice, PriceError } from "app/services/lens-pricing";
-import PrescriptionSelection, { PrescriptionMethod } from "./PrescriptionSelection";
-import CoatingReview, { CoatingSelection } from "./CoatingReview";
+import PrescriptionSelection, { type PrescriptionMethodCode } from "./PrescriptionSelection";
+import CoatingReview, { type CoatingSelection } from "./CoatingReview";
 import LensTechnologySelector, { type LensTechnologyColor, } from "./LensTechnologySelector";
+import SavedPrescriptionSelector from "./SavedPrescriptionSelector";
+import PrescriptionUpload from "./PrescriptionUpload";
 
 type PriceResult = {
   items: {
@@ -22,6 +24,20 @@ type PriceResult = {
   frameMinor: number;
   lensTotalMinor: number;
   totalMinor: number;
+};
+
+type SavedPrescription = {
+  id: string;
+  name: string;
+  rightSph: string | null;
+  rightCyl: string | null;
+  rightAxis: number | null;
+  leftSph: string | null;
+  leftCyl: string | null;
+  leftAxis: number | null;
+  pd: string | null;
+  prescribedAt: string | null;
+  expiresAt: string | null;
 };
 
 export default function LensConfiguratorPage({
@@ -37,12 +53,16 @@ export default function LensConfiguratorPage({
     catalog,
     lensIndices,
     lensVariantByMinor,
+    proxyPathPrefix,
   } = data;
 
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8>(1);
   const [prescriptionValues, setPrescriptionValues] = useState<PrescriptionData | undefined>();
+  const [prescriptionImage, setPrescriptionImage] = useState<File | null>(null);
+  const [prescriptionImageName, setPrescriptionImageName] = useState<string | null>(null);
   const [prescriptionErrors, setPrescriptionErrors] = useState<string[]>([]);
   const [selectedVisionTypeCode, setSelectedVisionTypeCode] = useState("single_vision_distance",);
+  const [selectedMethod, setSelectedMethod] = useState<PrescriptionMethodCode | null>("manual");
   const [selectedLensIndexCode, setSelectedLensIndexCode] = useState("");
   const [selectedLensIndex, setSelectedLensIndex] = useState<{
     code: string;
@@ -53,11 +73,8 @@ export default function LensConfiguratorPage({
   const [priceResult, setPriceResult] = useState<PriceResult | null>(null);
   const [priceError, setPriceError] = useState("");
   const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
-  const [prescriptionMethod, setPrescriptionMethod] = useState<PrescriptionMethod | null>(null);
-  const [coatingSelection, setCoatingSelection] = useState<CoatingSelection>({
-    antiFog: false,
-    blueLight: false,
-  });
+  const [prescriptionMethod, setPrescriptionMethod] = useState<PrescriptionMethodCode | null>(null);
+  const [coatingSelection, setCoatingSelection] = useState<CoatingSelection>([]);
 
   const [selectedCoatings, setSelectedCoatings] = useState<string[]>([]);
 
@@ -66,26 +83,40 @@ export default function LensConfiguratorPage({
 
   const selectedTechnologyName = catalog.lensTechnology.find((technology) => technology.code === selectedTechnologyCode)?.name
 
+  const [prescriptionStep, setPrescriptionStep] = useState<"saved" | "review" | null>(null);
+
+  const usesLensTechnology = [
+    "light_adaptive",
+    "sunglasses_tinted",
+    "sunglasses_polarized",
+  ].includes(selectedLensOptionCode);
+
   const compatibleIndexCodes =
-    selectedLensOptionCode === "light_adaptive" &&
-      selectedTechnologyCode
+    usesLensTechnology && selectedTechnologyCode
       ? catalog.lensTechnologyIndexCompatibility
         .filter(
           (compatibility) =>
-            compatibility.lensTechnology.code === selectedTechnologyCode
+            compatibility.lensTechnology?.code === selectedTechnologyCode &&
+            compatibility.lensType?.code === selectedVisionTypeCode &&
+            compatibility.lensOption?.code === selectedLensOptionCode
         )
         .map((compatibility) => compatibility.lensIndex.code)
       : catalog.lensIndexCompatibilities
         .filter(
           (compatibility) =>
-            compatibility.lensType.code === selectedVisionTypeCode &&
-            compatibility.lensOption.code === selectedLensOptionCode,
+            compatibility.lensType?.code === selectedVisionTypeCode &&
+            compatibility.lensOption?.code === selectedLensOptionCode,
         )
         .map((compatibility) => compatibility.lensIndex.code);
 
-  const handlePrescriptionContinue = (values: PrescriptionData) => {
-    const toNumber = (value: string) =>
-      value.trim() === "" ? undefined : Number(value);
+  const handlePrescriptionContinue = (
+    values: PrescriptionData,
+    image?: File,
+    fileUrl?: string,
+    fileName?: string,
+  ) => {
+    const toNumber = (value: string) => value.trim() === "" ? undefined : Number(value);
+
     const prescription: Prescription = {
       right: {
         sph: toNumber(values.rightSph),
@@ -106,9 +137,26 @@ export default function LensConfiguratorPage({
       return;
     }
 
-    setStep(4);
+    if (selectedVisionTypeCode === "progressive" && !image && !fileUrl) {
+      setPrescriptionErrors(["Prescription image is required for progressive lenses."]);
+      return;
+    }
+
     setPrescriptionValues(values);
+    setPrescriptionImage(image ?? null);
+    setPrescriptionImageName(image?.name ?? fileName ?? null);
     setPrescriptionErrors([]);
+    setStep(4);
+  };
+
+  const handleUploadContinue = (file: File, fileName: string) => {
+    setPrescriptionImage(file);
+    setPrescriptionImageName(fileName);
+    setPrescriptionValues(undefined);
+    setSelectedLensIndex(null);
+    setPriceResult(null);
+    setPrescriptionErrors([]);
+    setStep(8);
   };
 
   const selectedLensTypeName =
@@ -133,6 +181,7 @@ export default function LensConfiguratorPage({
           lensTypeCode: selectedVisionTypeCode,
           lensIndexCode,
           optionCodes,
+          lensTechnologyCode: selectedTechnologyCode || undefined,
         },
         framePriceMinor,
       );
@@ -187,7 +236,7 @@ export default function LensConfiguratorPage({
             selectedLensTypeCode={selectedVisionTypeCode}
             lensTypes={lensTypesWithPrices}
             onSelectLensType={(lensType) => {
-              if (lensType !== "single_vision_distance" && lensType !== "single_vision_reading") return;
+              if (lensType !== "single_vision_distance" && lensType !== "single_vision_reading" && lensType !== "progressive") return;
               setSelectedVisionTypeCode(lensType);
               setSelectedLensIndex(null);
               setSelectedLensIndexCode("")
@@ -201,20 +250,52 @@ export default function LensConfiguratorPage({
 
         {step === 2 && (
           <PrescriptionSelection
+            selectedMethod={selectedMethod}
+            methods={catalog.prescriptionMethods}
             onBack={() => setStep(1)}
+            onSelectMethod={setSelectedMethod}
             onContinue={(method) => {
               setPrescriptionMethod(method)
+              setSelectedMethod(method)
 
-              if (method === "manual") {
+              if (method === "manual" || method === 'upload') {
+                setPrescriptionStep(null)
                 setStep(3);
+              }
+              else if (method === 'saved') {
+                setPrescriptionStep("saved")
+                setStep(3)
+              }
+              else {
+                return
               }
             }}
           />
         )}
 
-        {step === 3 && (
+        {step === 3 && prescriptionMethod !== "manual" && prescriptionStep === "saved" && (
+          <SavedPrescriptionSelector
+            proxyPathPrefix={proxyPathPrefix}
+            errors={prescriptionErrors}
+            onSelectionChange={() => setPrescriptionErrors([])}
+            onBack={() => {
+              setPrescriptionStep(null)
+              setPrescriptionErrors([]);
+              setStep(2)
+            }}
+            onUseManual={() => {
+              setPrescriptionStep(null)
+              setPrescriptionMethod("manual")
+            }}
+            onContinue={handlePrescriptionContinue}
+            requirePrescriptionImage={selectedVisionTypeCode === "progressive"}
+          />
+        )}
+
+        {step === 3 && prescriptionMethod === 'manual' && (
           <PrescriptionForm
             lensIndexName={selectedLensTypeName}
+            proxyPathPrefix={proxyPathPrefix}
             refractiveIndex={
               lensIndices.find((index) => index.code === selectedLensIndexCode)
                 ?.refractiveIndex ?? null
@@ -226,6 +307,18 @@ export default function LensConfiguratorPage({
               setStep(2);
             }}
             onContinue={handlePrescriptionContinue}
+            requirePrescriptionImage={selectedVisionTypeCode === "progressive"}
+          />
+        )}
+
+        {step === 3 && prescriptionMethod === 'upload' && (
+          <PrescriptionUpload
+            proxyPathPrefix={proxyPathPrefix}
+            onBack={() => {
+              setPrescriptionErrors([])
+              setStep(2)
+            }}
+            onContinue={handleUploadContinue}
           />
         )}
 
@@ -239,11 +332,11 @@ export default function LensConfiguratorPage({
               setSelectedLensOptionCode(lensOptionCode);
               setSelectedLensIndex(null);
 
-              const defaultIndex = lensIndices.find((index) => compatibleIndexCodes.includes(index.code) && Number(index.refractiveIndex) === 1.5)
+              const defaultIndex = lensIndices.find((index) => compatibleIndexCodes.includes(index.code) && Number(index.refractiveIndex) === 1.56)
 
               setSelectedLensIndexCode(defaultIndex?.code ?? "");
 
-              if (lensOptionCode === 'light_adaptive') {
+              if (lensOptionCode === 'light_adaptive' || lensOptionCode === 'sunglasses_tinted' || lensOptionCode === 'sunglasses_polarized') {
                 setStep(5)
               }
               else {
@@ -256,9 +349,20 @@ export default function LensConfiguratorPage({
           />
         )}
 
-        {step === 5 && selectedLensOptionCode === 'light_adaptive' && (
+        {step === 5 && ["light_adaptive", "sunglasses_tinted", "sunglasses_polarized"].includes(selectedLensOptionCode) && (
           <LensTechnologySelector
-            technologies={catalog.lensTechnology}
+            technologies={
+              catalog.lensOptions
+                .find((option) => option.code === selectedLensOptionCode)
+                ?.lensTechnologyOptions
+                .filter(
+                  (mapping) =>
+                    mapping.lensType.code === selectedVisionTypeCode,
+                )
+                .map(
+                  (mapping) => mapping.lensTechnology
+                ) ?? []
+            }
             selectedTechnologyCode={selectedTechnologyCode}
             selectedColor={selectedTechnologyColor}
             onSelectTechnology={setSelectedTechnologyCode}
@@ -282,7 +386,7 @@ export default function LensConfiguratorPage({
             lensTypeCode={selectedVisionTypeCode}
             lensOptionCode={selectedLensOptionCode}
             onBack={() => {
-              if (selectedLensOptionCode === 'light_adaptive') {
+              if (selectedLensOptionCode === 'light_adaptive' || selectedLensOptionCode === 'sunglasses_tinted' || selectedLensOptionCode === 'sunglasses_polarized') {
                 setStep(5)
               }
               else {
@@ -301,6 +405,9 @@ export default function LensConfiguratorPage({
 
         {step === 7 && selectedLensIndex && (
           <CoatingReview
+            lensOptions={catalog.lensOptions.filter(
+              (option): option is typeof option & { category: "add_on" } => option.category === "add_on",
+            )}
             lensOptionCode={selectedLensOptionCode}
             initialSelection={coatingSelection}
             selectedTechnologyCode={selectedTechnologyCode}
@@ -308,28 +415,17 @@ export default function LensConfiguratorPage({
             onContinue={(selection) => {
               setCoatingSelection(selection)
 
-              const selected: string[] = [];
+              const optionCodes = [selectedLensOptionCode, ...selection];
 
-              if (selection.antiFog) {
-                selected.push("Anti-fog")
-              }
+              const coatingNames = catalog.lensOptions
+                .filter(
+                  (option) =>
+                    option.category === 'add_on' &&
+                    selection.includes(option.code)
+                )
+                .map((option) => option.name)
 
-              if (selection.blueLight) {
-                selected.push("Blue-light coating")
-              }
-
-              setSelectedCoatings(selected)
-
-              const optionCodes = [selectedLensOptionCode];
-
-              if (selection.antiFog) {
-                optionCodes.push("anti_fog");
-              }
-
-              if (selection.blueLight) {
-                optionCodes.push("blue_light_coating");
-              }
-
+              setSelectedCoatings(coatingNames)
 
               calculateSelectedPrice(
                 selectedLensIndex.code,
@@ -340,27 +436,30 @@ export default function LensConfiguratorPage({
           />
         )}
 
-        {step === 8 && selectedLensIndex && prescriptionValues && (
+        {step === 8 && (prescriptionMethod === "upload" || (selectedLensIndex && prescriptionValues)) && (
           <ConfigurationReview
             shop={shop}
             lensTypeName={selectedLensTypeName}
             lensOptionName={selectedLensOptionName}
-            lensIndexName={selectedLensIndex.displayName}
-            refractiveIndex={selectedLensIndex.refractiveIndex}
+            lensIndexName={selectedLensIndex?.displayName ?? ""}
+            refractiveIndex={selectedLensIndex?.refractiveIndex ?? 0}
             prescription={prescriptionValues}
+            isUploadOnly={prescriptionMethod === "upload"}
             framePriceMinor={framePriceMinor}
             lensVariantId={
               lensVariantByMinor[priceResult?.lensTotalMinor ?? 0] ?? null
             }
-            lensTotalMinor={priceResult?.lensTotalMinor ?? 0}
-            totalPriceMinor={priceResult?.totalMinor ?? framePriceMinor}
+            lensTotalMinor={prescriptionMethod === "upload" ? 0 : priceResult?.lensTotalMinor ?? 0}
+            totalPriceMinor={prescriptionMethod === "upload" ? framePriceMinor : priceResult?.totalMinor ?? framePriceMinor}
             currencyCode={currencyCode}
             variantId={product.variantId}
-            onBack={() => setStep(7)}
-            priceItems={priceResult?.items ?? []}
-            selectedCoatings={selectedCoatings}
-            selectedTechnologyName={selectedTechnologyName ?? ""}
+            onBack={() => setStep(prescriptionMethod === "upload" ? 3 : 7)}
+            priceItems={prescriptionMethod === "upload" ? [] : priceResult?.items ?? []}
+            selectedCoatings={prescriptionMethod === "upload" ? [] : selectedCoatings}
+            selectedTechnologyName={prescriptionMethod === "upload" ? "" : selectedTechnologyName ?? ""}
             selectedTechnologyColor={selectedTechnologyColor}
+            prescriptionImage={prescriptionImage}
+            prescriptionImageName={prescriptionImageName}
           />
         )}
       </div>

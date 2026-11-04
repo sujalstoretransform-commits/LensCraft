@@ -1,16 +1,31 @@
-import { LensTechnologyColor } from "@prisma/client";
 import { Check, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 
-export type CoatingSelection = {
-    antiFog: boolean;
-    blueLight: boolean;
+export type CoatingSelection = string[];
+
+type LensOption = {
+    code: string;
+    name: string;
+    description: string | null;
+    category: "add_on";
+    prices: {
+        code: string;
+        kind: string;
+        amountMinor: number;
+        currencyCode: string;
+    }[];
+    rules: {
+        code: string;
+        kind: string;
+        message: string;
+    }[];
 };
 
 type CoatingReviewProps = {
+    lensOptions: LensOption[];
     lensOptionCode: string;
     initialSelection?: CoatingSelection;
-    selectedTechnologyCode: string,
+    selectedTechnologyCode: string;
     onBack: () => void;
     onContinue: (selection: CoatingSelection) => void;
 };
@@ -23,6 +38,7 @@ const includedCoatings = [
 ];
 
 export default function CoatingReview({
+    lensOptions,
     lensOptionCode,
     initialSelection,
     selectedTechnologyCode,
@@ -30,24 +46,45 @@ export default function CoatingReview({
     onContinue,
 }: CoatingReviewProps) {
     const [selection, setSelection] = useState<CoatingSelection>(
-        initialSelection ?? {
-            antiFog: false,
-            blueLight: false,
-        },
+        initialSelection ?? [],
     );
+
+    const toggleOption = (code: string) => {
+        setSelection((current) =>
+            current.includes(code)
+                ? current.filter((selectedCode) => selectedCode !== code)
+                : [...current, code],
+        );
+    };
 
     const showBlueLightCoating =
         lensOptionCode === "clear" ||
-        (lensOptionCode === 'light_adaptive' &&
+        (lensOptionCode === "light_adaptive" &&
             selectedTechnologyCode !== "standard_light_adaptive_blue_light" &&
             selectedTechnologyCode !== "in_car_light_adaptive_blue_light"
-        )
+        );
 
-    function toggleOption(option: keyof CoatingSelection) {
-        setSelection((current) => ({
-            ...current,
-            [option]: !current[option],
-        }));
+    const visibleOptions = lensOptions.filter((option) => {
+        if (option.code === "blue_light_coating") {
+            return showBlueLightCoating;
+        }
+
+        return true;
+    });
+
+    function getOptionPrice(option: LensOption) {
+        const price = option.prices.find(
+            (item) => item.kind === "add_on",
+        );
+
+        if (!price) {
+            return null;
+        }
+
+        return new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: price.currencyCode,
+        }).format(price.amountMinor / 100);
     }
 
     return (
@@ -63,8 +100,8 @@ export default function CoatingReview({
                     </h2>
 
                     <p className="mt-2 text-sm leading-6 text-slate-500 sm:text-base">
-                        Every pair includes essential protective coatings. Choose any
-                        optional add-ons you need.
+                        Every pair includes essential protective coatings.
+                        Choose any optional add-ons you need.
                     </p>
                 </div>
 
@@ -79,6 +116,7 @@ export default function CoatingReview({
                                 <h3 className="font-semibold text-slate-900">
                                     Included with every pair
                                 </h3>
+
                                 <p className="mt-1 text-sm text-slate-500">
                                     No additional selection required
                                 </p>
@@ -87,12 +125,16 @@ export default function CoatingReview({
 
                         <ul className="space-y-4">
                             {includedCoatings.map((coating) => (
-                                <li key={coating} className="flex items-start gap-3">
+                                <li
+                                    key={coating}
+                                    className="flex items-start gap-3"
+                                >
                                     <Check
                                         size={18}
                                         className="mt-0.5 shrink-0 text-green-600"
                                         aria-hidden="true"
                                     />
+
                                     <span className="text-sm leading-6 text-slate-700">
                                         {coating}
                                     </span>
@@ -111,43 +153,53 @@ export default function CoatingReview({
                         </p>
 
                         <div className="mt-5 space-y-4">
-                            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-4 transition hover:border-blue-300 hover:bg-blue-50/30">
-                                <input
-                                    type="checkbox"
-                                    checked={selection.antiFog}
-                                    onChange={() => toggleOption("antiFog")}
-                                    className="mt-1 size-4 accent-blue-600"
-                                />
+                            {visibleOptions.map((option) => {
+                                const isSelected = selection.includes(option.code);
 
-                                <span className="min-w-0">
-                                    <span className="block font-medium text-slate-800">
-                                        Anti-fog coating
-                                    </span>
-                                    <span className="mt-1 block text-sm leading-5 text-slate-500">
-                                        Helps prevent fogging in cold weather, while wearing
-                                        masks, and in kitchens. Activator cloth included.
-                                    </span>
-                                </span>
-                            </label>
+                                const price = getOptionPrice(option);
 
-                            {showBlueLightCoating && (
-                                <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-4 transition hover:border-blue-300 hover:bg-blue-50/30">
-                                    <input
-                                        type="checkbox"
-                                        checked={selection.blueLight}
-                                        onChange={() => toggleOption("blueLight")}
-                                        className="mt-1 size-4 accent-blue-600"
-                                    />
+                                return (
+                                    <label
+                                        key={option.code}
+                                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition ${isSelected
+                                            ? "border-blue-500 bg-blue-50/50"
+                                            : "border-slate-200 hover:border-blue-300 hover:bg-blue-50/30"
+                                            }`}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            onChange={() =>
+                                                toggleOption(option.code)
+                                            }
+                                            className="mt-1 size-4 accent-blue-600"
+                                        />
 
-                                    <span className="min-w-0">
-                                        <span className="block font-medium text-slate-800">
-                                            Blue-light coating
+                                        <span className="min-w-0 flex-1">
+                                            <span className="flex flex-wrap items-center justify-between gap-2">
+                                                <span className="font-medium text-slate-800">
+                                                    {option.name}
+                                                </span>
+
+                                                <span className="text-sm font-semibold text-blue-600">
+                                                    {price ?? "Price unavailable"}
+                                                </span>
+                                            </span>
+
+                                            {option.description && (
+                                                <span className="mt-1 block text-sm leading-5 text-slate-500">
+                                                    {option.description}
+                                                </span>
+                                            )}
                                         </span>
-                                        <span className="mt-1 block text-sm leading-5 text-slate-500">
-                                            Adds a blue-light filter to clear lenses.
-                                        </span>
-                                    </span>
-                                </label>
+                                    </label>
+                                );
+                            })}
+
+                            {visibleOptions.length === 0 && (
+                                <p className="rounded-lg bg-slate-50 p-4 text-sm text-slate-500">
+                                    No optional coatings are available.
+                                </p>
                             )}
                         </div>
                     </div>
@@ -165,7 +217,7 @@ export default function CoatingReview({
                     <button
                         type="button"
                         onClick={() => onContinue(selection)}
-                        className="rounded-lg bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-700"
+                        className="rounded-lg bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
                     >
                         Continue
                     </button>

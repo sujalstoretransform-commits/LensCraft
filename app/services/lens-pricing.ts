@@ -6,15 +6,30 @@ type Price = {
     lensIndex?: { code: string } | null;
 }
 
+type TechnologyPrice = {
+    code: string;
+    amountMinor: number;
+}
+
+type TechnologyMapping = {
+    lensType: { code: string };
+    lensTechnology: {
+        code: string;
+        name: string;
+        lensPrices: TechnologyPrice[];
+    };
+}
+
 type Catalog = {
     lensTypes: { code: string, name: string, prices: Price[] }[]
-    lensOptions: { code: string, name: string, prices: Price[] }[]
+    lensOptions: { code: string, name: string, prices: Price[], lensTechnologyOptions?: TechnologyMapping[] }[]
 }
 
 type PriceSelection = {
     lensTypeCode: string;
     lensIndexCode?: string;
     optionCodes: string[];
+    lensTechnologyCode?: string;
 }
 
 const getOneprice = (prices: Price[], typeName: string) => {
@@ -58,10 +73,39 @@ export const calculatePrice = (
         const option = catalog.lensOptions.find((o) => o.code === code)
         if (!option) throw new PriceError(`Unknown option: ${code}`);
 
-        if (option.prices.length === 0) continue;
+        if (option.prices.length > 0) {
+            const optionPrice = getOneprice(option.prices, option.name)
+            items.push({ code: optionPrice.code, label: option.name, amountMinor: optionPrice.amountMinor })
+        }
 
-        const optionPrice = getOneprice(option.prices, option.name)
-        items.push({ code: optionPrice.code, label: option.name, amountMinor: optionPrice.amountMinor })
+        if (!selection.lensTechnologyCode) continue;
+
+        const technologyMapping = option.lensTechnologyOptions?.find(
+            (mapping) =>
+                mapping.lensType.code === selection.lensTypeCode &&
+                mapping.lensTechnology.code === selection.lensTechnologyCode
+        )
+
+        if (technologyMapping) {
+            const technology = technologyMapping.lensTechnology;
+            const technologyPrice = getOneprice(
+                technology.lensPrices,
+                technology.name
+            );
+
+            items.push({
+                code: technologyPrice.code,
+                label: technology.name,
+                amountMinor: technologyPrice.amountMinor
+            })
+        } else if (
+            option.lensTechnologyOptions?.some(
+                (mapping) => mapping.lensType.code === selection.lensTypeCode
+            )) {
+            throw new PriceError(
+                `Technology ${selection.lensTechnologyCode} is not available for ${option.name}.`,
+            );
+        }
     }
 
     const lensTotalMinor = items.reduce((sum, item) => sum + item.amountMinor, 0)

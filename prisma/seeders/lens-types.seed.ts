@@ -37,13 +37,6 @@ const lensTypes = [
     description:
       "Clear, blue-light or sun lenses without vision correction.",
   },
-  {
-    code: "bifocal",
-    name: "Bifocal (With Line)",
-    family: LensFamily.clear,
-    description:
-      "Distance vision on top and reading vision at the bottom.",
-  },
 ];
 
 async function main() {

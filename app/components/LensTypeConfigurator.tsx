@@ -61,7 +61,7 @@ export default function LensTypeConfigurator({
                                 type="button"
                                 aria-pressed={isSelected}
                                 onClick={() => setSelectedType(lens.code)}
-                                className={`relative rounded-xl border p-5 text-left transition ${isSelected
+                                className={`relative flex flex-col rounded-xl border p-5 text-left transition ${isSelected
                                     ? "border-blue-600 bg-blue-50/50 ring-1 ring-blue-600"
                                     : "border-slate-200 hover:border-slate-400"
                                     }`}
@@ -86,6 +86,12 @@ export default function LensTypeConfigurator({
                                 <p className="mt-2 text-sm leading-6 text-slate-600">
                                     {lens.description}
                                 </p>
+
+                                {lens.prices.length > 0 && (
+                                    <span className="mt-5 block text-sm font-semibold text-blue-600">
+                                        From ${(lens.prices[0].amountMinor / 100).toFixed(2)}
+                                    </span>
+                                )}
                             </button>
                         );
                     })}
@@ -98,7 +104,8 @@ export default function LensTypeConfigurator({
                         className="rounded-lg border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                     >
                         Back
-                    </button>                    <button
+                    </button>
+                    <button
                         type="button"
                         onClick={() => onContinue(selectedType)}
                         className="rounded-lg bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"

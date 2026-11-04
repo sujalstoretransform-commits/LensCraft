@@ -1,8 +1,6 @@
 import { authenticate } from "../shopify.server";
 import { loadLensCatalog } from "./lens-catalog.server";
 
-const SHOP_REGEX = /^[a-z0-9][a-z0-9-]*\.myshopify\.com$/;
-
 const safeImageUrl = (raw: string | null): string | null => {
   if (!raw) return null;
 
@@ -81,6 +79,7 @@ export async function loadLensConfiguratorPage(request: Request) {
   return {
     shop,
     currencyCode,
+    proxyPathPrefix: url.searchParams.get("path_prefix"),
     framePriceMinor,
     product,
     lensIndices,
@@ -91,6 +90,7 @@ export async function loadLensConfiguratorPage(request: Request) {
       lensIndexCompatibilities: catalog.lensIndexCompatibilities,
       lensTechnology: catalog.lensTechnologies,
       lensTechnologyIndexCompatibility: catalog.lensTechnologyIndexCompatibility,
+      prescriptionMethods: catalog.prescriptionMethods,
     },
   };
 }
