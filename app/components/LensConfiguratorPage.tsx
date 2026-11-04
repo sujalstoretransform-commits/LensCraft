@@ -13,6 +13,7 @@ import PrescriptionSelection, { type PrescriptionMethodCode } from "./Prescripti
 import CoatingReview, { type CoatingSelection } from "./CoatingReview";
 import LensTechnologySelector, { type LensTechnologyColor, } from "./LensTechnologySelector";
 import SavedPrescriptionSelector from "./SavedPrescriptionSelector";
+import PrescriptionUpload from "./PrescriptionUpload";
 
 type PriceResult = {
   items: {
@@ -61,6 +62,7 @@ export default function LensConfiguratorPage({
   const [prescriptionImageName, setPrescriptionImageName] = useState<string | null>(null);
   const [prescriptionErrors, setPrescriptionErrors] = useState<string[]>([]);
   const [selectedVisionTypeCode, setSelectedVisionTypeCode] = useState("single_vision_distance",);
+  const [selectedMethod, setSelectedMethod] = useState<PrescriptionMethodCode | null>("manual");
   const [selectedLensIndexCode, setSelectedLensIndexCode] = useState("");
   const [selectedLensIndex, setSelectedLensIndex] = useState<{
     code: string;
@@ -145,6 +147,16 @@ export default function LensConfiguratorPage({
     setPrescriptionImageName(image?.name ?? fileName ?? null);
     setPrescriptionErrors([]);
     setStep(4);
+  };
+
+  const handleUploadContinue = (file: File, fileName: string) => {
+    setPrescriptionImage(file);
+    setPrescriptionImageName(fileName);
+    setPrescriptionValues(undefined);
+    setSelectedLensIndex(null);
+    setPriceResult(null);
+    setPrescriptionErrors([]);
+    setStep(8);
   };
 
   const selectedLensTypeName =
@@ -238,12 +250,15 @@ export default function LensConfiguratorPage({
 
         {step === 2 && (
           <PrescriptionSelection
+            selectedMethod={selectedMethod}
             methods={catalog.prescriptionMethods}
             onBack={() => setStep(1)}
+            onSelectMethod={setSelectedMethod}
             onContinue={(method) => {
               setPrescriptionMethod(method)
+              setSelectedMethod(method)
 
-              if (method === "manual") {
+              if (method === "manual" || method === 'upload') {
                 setPrescriptionStep(null)
                 setStep(3);
               }
@@ -293,6 +308,17 @@ export default function LensConfiguratorPage({
             }}
             onContinue={handlePrescriptionContinue}
             requirePrescriptionImage={selectedVisionTypeCode === "progressive"}
+          />
+        )}
+
+        {step === 3 && prescriptionMethod === 'upload' && (
+          <PrescriptionUpload
+            proxyPathPrefix={proxyPathPrefix}
+            onBack={() => {
+              setPrescriptionErrors([])
+              setStep(2)
+            }}
+            onContinue={handleUploadContinue}
           />
         )}
 
@@ -410,26 +436,27 @@ export default function LensConfiguratorPage({
           />
         )}
 
-        {step === 8 && selectedLensIndex && prescriptionValues && (
+        {step === 8 && (prescriptionMethod === "upload" || (selectedLensIndex && prescriptionValues)) && (
           <ConfigurationReview
             shop={shop}
             lensTypeName={selectedLensTypeName}
             lensOptionName={selectedLensOptionName}
-            lensIndexName={selectedLensIndex.displayName}
-            refractiveIndex={selectedLensIndex.refractiveIndex}
+            lensIndexName={selectedLensIndex?.displayName ?? ""}
+            refractiveIndex={selectedLensIndex?.refractiveIndex ?? 0}
             prescription={prescriptionValues}
+            isUploadOnly={prescriptionMethod === "upload"}
             framePriceMinor={framePriceMinor}
             lensVariantId={
               lensVariantByMinor[priceResult?.lensTotalMinor ?? 0] ?? null
             }
-            lensTotalMinor={priceResult?.lensTotalMinor ?? 0}
-            totalPriceMinor={priceResult?.totalMinor ?? framePriceMinor}
+            lensTotalMinor={prescriptionMethod === "upload" ? 0 : priceResult?.lensTotalMinor ?? 0}
+            totalPriceMinor={prescriptionMethod === "upload" ? framePriceMinor : priceResult?.totalMinor ?? framePriceMinor}
             currencyCode={currencyCode}
             variantId={product.variantId}
-            onBack={() => setStep(7)}
-            priceItems={priceResult?.items ?? []}
-            selectedCoatings={selectedCoatings}
-            selectedTechnologyName={selectedTechnologyName ?? ""}
+            onBack={() => setStep(prescriptionMethod === "upload" ? 3 : 7)}
+            priceItems={prescriptionMethod === "upload" ? [] : priceResult?.items ?? []}
+            selectedCoatings={prescriptionMethod === "upload" ? [] : selectedCoatings}
+            selectedTechnologyName={prescriptionMethod === "upload" ? "" : selectedTechnologyName ?? ""}
             selectedTechnologyColor={selectedTechnologyColor}
             prescriptionImage={prescriptionImage}
             prescriptionImageName={prescriptionImageName}

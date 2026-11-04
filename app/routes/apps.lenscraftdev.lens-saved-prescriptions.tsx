@@ -103,13 +103,6 @@ export async function action({ request }: ActionFunctionArgs) {
     const leftSph = String(formData.get("leftSph") ?? "").trim();
     const pd = String(formData.get("pd") ?? "").trim();
 
-    if (!name || !rightSph || !leftSph || !pd) {
-      return Response.json(
-        { error: "Name, right SPH, left SPH, and PD are required" },
-        { status: 400 },
-      );
-    }
-
     let uploadedFile: {
       pathname: string;
       contentType: string;
@@ -120,19 +113,24 @@ export async function action({ request }: ActionFunctionArgs) {
     const prescriptionImage = formData.get("prescriptionImage");
 
     if (prescriptionImage instanceof File && prescriptionImage.size > 0) {
-      const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "application/pdf",
+      ];
       const maxFileSize = 5 * 1024 * 1024;
 
       if (!allowedTypes.includes(prescriptionImage.type)) {
         return Response.json(
-          { error: "Only JPG, PNG, and WEBP images are allowed" },
+          { error: "Only JPG, PNG, WEBP, and PDF files are allowed" },
           { status: 400 },
         );
       }
 
       if (prescriptionImage.size > maxFileSize) {
         return Response.json(
-          { error: "Prescription image must be 5MB or smaller" },
+          { error: "Prescription file must be 5MB or smaller" },
           { status: 400 },
         );
       }
@@ -141,6 +139,7 @@ export async function action({ request }: ActionFunctionArgs) {
         "image/jpeg": "jpg",
         "image/png": "png",
         "image/webp": "webp",
+        "application/pdf": "pdf",
       };
 
       const pathname = `prescriptions/${crypto.randomUUID()}.${extensionByType[prescriptionImage.type]}`;
@@ -160,6 +159,17 @@ export async function action({ request }: ActionFunctionArgs) {
       };
     }
 
+    if (!name || (!uploadedFile && (!rightSph || !leftSph || !pd))) {
+      return Response.json(
+        {
+          error: uploadedFile
+            ? "Name is required"
+            : "Name, right SPH, left SPH, and PD are required unless a prescription file is uploaded",
+        },
+        { status: 400 },
+      );
+    }
+
     const getOptionalString = (key: string) => {
       const value = String(formData.get(key) ?? "").trim();
       return value || null;
@@ -174,13 +184,13 @@ export async function action({ request }: ActionFunctionArgs) {
       shop: session.shop,
       customerId,
       name,
-      rightSph,
+      rightSph: rightSph || null,
       rightCyl: getOptionalString("rightCyl"),
       rightAxis: getOptionalNumber("rightAxis"),
-      leftSph,
+      leftSph: leftSph || null,
       leftCyl: getOptionalString("leftCyl"),
       leftAxis: getOptionalNumber("leftAxis"),
-      pd,
+      pd: pd || null,
       prescribedAt: null,
       expiresAt: null,
       fileKey: uploadedFile?.pathname ?? null,

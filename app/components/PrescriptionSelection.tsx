@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   ClipboardPenLine,
   FileUp,
@@ -15,8 +14,10 @@ export type PrescriptionMethodOption = {
 };
 
 type PrescriptionSelectionProps = {
+  selectedMethod: PrescriptionMethodCode | null;
   methods: PrescriptionMethodOption[];
   onBack: () => void;
+  onSelectMethod: (method: PrescriptionMethodCode) => void;
   onContinue: (method: PrescriptionMethodCode) => void;
 };
 
@@ -30,11 +31,12 @@ const prescriptionMethodIcons = {
 
 
 export default function PrescriptionSelection({
+  selectedMethod,
   methods,
   onBack,
+  onSelectMethod,
   onContinue,
 }: PrescriptionSelectionProps) {
-  const [selectedMethod, setSelectedMethod] = useState<PrescriptionMethodCode | null>(null);
 
   return (
     <section className="w-full px-5 py-8 md:px-12 md:py-12">
@@ -63,7 +65,7 @@ export default function PrescriptionSelection({
                 key={method.code}
                 type="button"
                 aria-pressed={isSelected}
-                onClick={() => setSelectedMethod(method.code)}
+                onClick={() => onSelectMethod(method.code)}
                 className={`group flex w-full items-start gap-4 rounded-xl border p-5 text-left transition ${isSelected
                   ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
                   : "border-slate-200 bg-white hover:border-slate-400 hover:bg-slate-50"
